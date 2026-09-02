@@ -1,0 +1,3 @@
+@echo off
+echo Starting AI Sales Assistant FastAPI Backend Server...
+"C:\Users\Lenovo\AppData\Local\Programs\Python\Python312\python.exe" main.py

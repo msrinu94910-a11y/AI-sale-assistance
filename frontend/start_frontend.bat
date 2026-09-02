@@ -1,0 +1,3 @@
+@echo off
+echo Starting AI Sales Assistant React Frontend...
+npm run dev

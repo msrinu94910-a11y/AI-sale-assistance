@@ -1,0 +1,1039 @@
+# AI Sales Assistant — Product Requirements Document (PRD)
+
+**Document Version:** 1.0  
+**Status:** Draft / Assignment Baseline  
+**Product Type:** AI-powered Website Sales Assistant  
+**Primary Use Case:** Lead generation, property discovery, and site-visit booking  
+**AI Architecture:** LLM-powered conversational assistant without RAG  
+**Primary Backend:** Python + FastAPI  
+**Database:** SQLite for assignment MVP, PostgreSQL-ready design  
+**Frontend:** HTML5 + CSS3 + JavaScript  
+**AI Provider:** OpenAI API
+
+---
+
+## 1. Product Overview
+
+The **AI Sales Assistant** is a conversational website chatbot designed to act as a digital sales representative.
+
+The assistant should understand a customer's natural-language requests, ask relevant follow-up questions, collect property requirements, search available properties from the application's database, recommend suitable properties, compare selected properties, and guide the customer through site-visit booking.
+
+The product is intentionally designed **without RAG**.
+
+The AI model is responsible for conversation understanding, response generation, intent detection, and structured information extraction. The application's backend remains the authoritative source for property inventory, pricing, availability-related business data, leads, and bookings.
+
+### Core Principle
+
+```text
+Customer Message
+      ↓
+AI understands intent / extracts requirements
+      ↓
+Python FastAPI backend
+      ↓
+Database query / business logic
+      ↓
+Verified application data
+      ↓
+AI generates helpful response
+      ↓
+Customer
+```
+
+This separation prevents the AI from inventing property records and makes the application easier to maintain and test.
+
+---
+
+# 2. Problem Statement
+
+Traditional website visitors often struggle to find the right property quickly.
+
+Common problems include:
+
+- Customers do not know which property matches their budget.
+- Visitors have to manually browse many property listings.
+- Sales teams spend time answering repetitive questions.
+- Lead information may be incomplete or collected too late.
+- Customers may leave the website without requesting a site visit.
+- Static website forms do not provide an interactive sales experience.
+- Customers may need help comparing multiple properties.
+
+The AI Sales Assistant addresses these problems by providing an always-available conversational sales experience.
+
+---
+
+# 3. Product Vision
+
+Build a modern AI sales assistant that can convert a casual website visitor into a qualified property lead through a natural conversation.
+
+The intended experience is:
+
+```text
+Discover
+   ↓
+Understand Need
+   ↓
+Collect Requirements
+   ↓
+Find Matching Properties
+   ↓
+Recommend
+   ↓
+Compare
+   ↓
+Book Site Visit
+```
+
+The assistant should feel like a helpful sales representative rather than a generic chatbot.
+
+---
+
+# 4. Goals
+
+## 4.1 Primary Goals
+
+1. Provide natural conversational assistance.
+2. Understand customer property requirements.
+3. Collect structured lead information through conversation.
+4. Search the property's database based on customer requirements.
+5. Recommend relevant properties.
+6. Help customers compare selected properties.
+7. Allow customers to schedule a site visit directly through chat.
+
+## 4.2 Business Goals
+
+- Increase qualified leads.
+- Reduce repetitive sales-support conversations.
+- Increase property discovery engagement.
+- Improve site-visit conversion.
+- Capture structured customer requirements.
+- Create a usable AI sales workflow for demonstration and future deployment.
+
+## 4.3 Technical Goals
+
+- Use Python as the primary backend language.
+- Keep the architecture modular and easy to extend.
+- Avoid RAG in the initial release.
+- Keep business data controlled by the database.
+- Maintain clear separation between AI, business logic, API, and database layers.
+- Design APIs that can later support React or mobile clients.
+
+---
+
+# 5. Non-Goals
+
+The following are explicitly outside the initial product scope:
+
+- RAG or vector database implementation.
+- Training or fine-tuning a custom LLM.
+- Autonomous negotiation with customers.
+- Financial or legal advice.
+- Automated payment processing.
+- Property document verification.
+- Fully autonomous sales-agent replacement.
+- WhatsApp/Telegram integration in the initial version.
+- Voice calling in the initial version.
+- Predictive property valuation.
+- Government/legal verification of property information.
+
+These may be considered future enhancements.
+
+---
+
+# 6. Target Users
+
+## 6.1 Website Visitor
+
+A visitor who wants to explore properties and receive personalized assistance.
+
+Examples:
+
+> I need a 3 BHK in Hyderabad.
+
+> Show properties below 1 crore.
+
+> I want something near Gachibowli.
+
+> Which one is better?
+
+> I want to visit this property.
+
+## 6.2 Sales Team
+
+The sales team benefits from structured leads generated by the assistant.
+
+They should receive useful information such as:
+
+- Customer name
+- Contact details
+- Budget
+- Preferred location
+- Property type
+- BHK preference
+- Selected property
+- Site-visit request
+
+---
+
+# 7. Core User Journey
+
+## 7.1 Entry
+
+The chatbot appears as a website chat widget.
+
+Example greeting:
+
+> Hi! I'm your AI Property Assistant. I can help you find properties, compare options, and book a site visit. What are you looking for?
+
+Suggested actions may include:
+
+- Find a Property
+- Properties Under My Budget
+- Compare Properties
+- Book a Site Visit
+
+---
+
+## 7.2 Requirement Discovery
+
+The assistant should ask only useful questions based on what is already known.
+
+For example:
+
+```text
+User:
+I need a villa in Hyderabad.
+
+Assistant:
+Great. What is your approximate budget?
+```
+
+Then:
+
+```text
+User:
+Around 1.5 crore.
+
+Assistant:
+Got it. Are you looking for the villa for personal use or investment?
+```
+
+The assistant should avoid repeatedly asking for information already provided.
+
+---
+
+## 7.3 Property Search
+
+Once enough information is available, the backend should search the property database.
+
+Example requirement object:
+
+```json
+{
+  "location": "Hyderabad",
+  "property_type": "Villa",
+  "budget_max": 15000000,
+  "bhk": null,
+  "purpose": "end_use"
+}
+```
+
+The backend returns matching properties.
+
+---
+
+## 7.4 Recommendation
+
+The assistant should present relevant matches clearly.
+
+Example:
+
+```text
+I found 3 properties that match your requirements.
+
+1. Green Valley Villas
+   4 BHK
+   ₹1.35 Cr
+   Gachibowli
+
+2. Urban Nest Villas
+   4 BHK
+   ₹1.45 Cr
+   Narsingi
+
+3. Lakeview Residences
+   3 BHK
+   ₹1.20 Cr
+   Kondapur
+```
+
+Property results must originate from the database.
+
+---
+
+## 7.5 Comparison
+
+The customer can select two or more properties.
+
+The assistant should compare available database fields such as:
+
+- Price
+- Property type
+- BHK
+- Area
+- Location
+- Amenities
+- Status
+
+The AI can explain the differences in natural language, but must not invent unsupported facts.
+
+---
+
+## 7.6 Site Visit Booking
+
+When the customer selects a property and asks to visit:
+
+```text
+Assistant:
+Sure. Which date would you prefer?
+
+User:
+Sunday.
+
+Assistant:
+What time would work for you?
+
+User:
+11 AM.
+```
+
+The system creates a booking after collecting the required information.
+
+---
+
+# 8. Functional Requirements
+
+# FR-01 — AI Conversation
+
+The system shall provide a conversational interface between the website visitor and the AI Sales Assistant.
+
+### Requirements
+
+- Accept natural-language messages.
+- Generate context-aware responses.
+- Maintain conversation context during the active session.
+- Show user and assistant messages distinctly.
+- Show loading/typing state while waiting for an AI response.
+- Handle empty or invalid messages gracefully.
+- Provide fallback responses when the assistant cannot confidently handle a request.
+
+### Example
+
+```text
+User:
+I need something around 80 lakhs.
+
+Assistant:
+Sure. Which location are you considering?
+```
+
+---
+
+# FR-02 — Requirement Collection
+
+The system shall collect property requirements conversationally.
+
+### Supported Requirement Fields
+
+- Name
+- Phone number
+- Email
+- Location
+- Property type
+- BHK
+- Minimum budget
+- Maximum budget
+- Purpose
+- Buying timeline
+
+### Property Types
+
+The initial system should support configurable property types such as:
+
+- Apartment
+- Villa
+- Plot
+- Independent House
+
+### Purpose
+
+- Own use
+- Investment
+
+### Buying Timeline
+
+- Immediate
+- Within 1 month
+- 1–3 months
+- 3–6 months
+- 6+ months
+- Just exploring
+
+### Rules
+
+- Do not ask every field in a rigid sequence.
+- Extract fields from existing user messages whenever possible.
+- Ask only for missing information needed to progress.
+- Preserve collected information in the current session.
+- Allow customers to correct previously provided information.
+
+Example:
+
+```text
+User:
+My budget is 90 lakhs and I need a 3 BHK in Hyderabad.
+
+System extracts:
+
+location = Hyderabad
+bhk = 3
+budget_max = 9000000
+```
+
+---
+
+# FR-03 — Smart Property Recommendation
+
+The system shall recommend properties using database-backed matching.
+
+### Matching Inputs
+
+- Location
+- Property type
+- BHK
+- Budget
+- Purpose where applicable
+
+### Recommendation Rules
+
+The system should:
+
+1. Prioritize exact matches.
+2. Allow configurable tolerance where exact matches are unavailable.
+3. Prefer active/available properties.
+4. Return a limited number of highly relevant results.
+5. Clearly distinguish exact matches from close alternatives.
+
+### Important Constraint
+
+The AI must never create fictional properties.
+
+```text
+Database = Source of Truth
+AI = Conversation + Explanation Layer
+```
+
+---
+
+# FR-04 — Budget-Based Search
+
+The assistant shall understand budget-related natural language.
+
+Examples:
+
+```text
+Under 80 lakhs
+Below 1 crore
+Around 75 lakhs
+My budget is 1.2 crore
+Between 70 and 90 lakhs
+```
+
+The system should convert these into normalized numeric values.
+
+Example:
+
+```json
+{
+  "budget_min": 7000000,
+  "budget_max": 9000000
+}
+```
+
+The backend then queries the property database.
+
+---
+
+# FR-05 — Location-Based Search
+
+The assistant shall understand location-based requests.
+
+Examples:
+
+```text
+Properties in Gachibowli
+Near Kondapur
+I want a villa in Hyderabad
+Show me properties around Financial District
+```
+
+The system should normalize location values before querying.
+
+The initial version may use exact or configured location matching.
+
+Future versions may support geographic radius search.
+
+---
+
+# FR-06 — Property Comparison
+
+The system shall allow a customer to compare selected properties.
+
+### Comparison Fields
+
+- Property name
+- Price
+- Location
+- Property type
+- BHK
+- Area
+- Amenities
+- Availability/status
+
+### Requirements
+
+- Customer can select at least two properties.
+- Comparison data must come from the database.
+- The AI may provide a natural-language summary.
+- The assistant should not make unsupported claims.
+- The interface should make differences visually easy to understand.
+
+---
+
+# FR-07 — Site Visit Booking
+
+The assistant shall allow customers to request and create a site visit booking.
+
+### Required Data
+
+- Customer name
+- Phone
+- Email where available
+- Property
+- Preferred date
+- Preferred time
+
+### Booking Status
+
+Initial supported statuses:
+
+```text
+Requested
+Confirmed
+Completed
+Cancelled
+```
+
+### Validation
+
+The system must:
+
+- Validate required fields.
+- Validate date format.
+- Prevent obviously invalid dates.
+- Confirm booking details before final submission.
+- Store the booking in the database.
+- Return a booking reference to the user.
+
+Example:
+
+```text
+Site Visit Request Created
+
+Property: Green Valley Villas
+Date: 14 September 2026
+Time: 11:00 AM
+Reference: SV-20260914-001
+```
+
+---
+
+# 9. Chat Experience Requirements
+
+## 9.1 Chat Widget
+
+The website chatbot should support:
+
+- Floating chat button
+- Expand/collapse
+- Message history during active session
+- Text input
+- Send button
+- Loading state
+- Suggested prompts
+
+## 9.2 Suggested Prompts
+
+Examples:
+
+```text
+Find a property
+Show properties under ₹1 Cr
+Find a 3 BHK
+Compare properties
+Book a site visit
+```
+
+## 9.3 Message Handling
+
+Messages should support:
+
+- Plain text
+- Structured property cards
+- Action buttons
+- Booking confirmation
+- Error/fallback messages
+
+---
+
+# 10. AI Responsibilities
+
+The AI layer is responsible for:
+
+- Understanding natural language.
+- Detecting user intent.
+- Extracting structured requirements.
+- Asking relevant follow-up questions.
+- Generating conversational responses.
+- Explaining database-returned property information.
+- Guiding the user through search and booking workflows.
+
+### Example Intent Categories
+
+```text
+GREETING
+PROPERTY_SEARCH
+BUDGET_SEARCH
+LOCATION_SEARCH
+PROPERTY_DETAILS
+COMPARE_PROPERTIES
+BOOK_SITE_VISIT
+UPDATE_REQUIREMENTS
+CANCEL_BOOKING_REQUEST
+HELP
+UNKNOWN
+```
+
+---
+
+# 11. Backend Responsibilities
+
+The Python backend is the application authority.
+
+It is responsible for:
+
+- API authentication/validation where required.
+- Session management.
+- Calling the AI provider.
+- Validating AI-extracted structured data.
+- Property database queries.
+- Recommendation logic.
+- Comparison data retrieval.
+- Booking creation.
+- Data persistence.
+- Error handling.
+- Logging.
+- Rate limiting.
+- Protecting API keys.
+
+The AI should never directly write arbitrary data to the database.
+
+---
+
+# 12. Data and Business Rules
+
+## 12.1 Property Data Source
+
+Property information must be stored in the application's database.
+
+The minimum property record should include:
+
+```text
+id
+name
+description
+location
+property_type
+bhk
+price
+area
+amenities
+status
+```
+
+## 12.2 Property Status
+
+Recommended initial values:
+
+```text
+AVAILABLE
+RESERVED
+SOLD
+INACTIVE
+```
+
+Only eligible properties should appear in recommendations.
+
+## 12.3 Pricing
+
+Prices must be represented as numeric values in the database.
+
+The UI can format them as:
+
+```text
+₹80 Lakhs
+₹1.20 Cr
+```
+
+The underlying database remains numeric.
+
+---
+
+# 13. Lead Capture
+
+Although the primary selected features are 1–7, requirement collection should produce usable customer information for the sales workflow.
+
+A lead should be created when sufficient customer information is available.
+
+Recommended trigger:
+
+```text
+Customer Contact Details
++
+Meaningful Property Requirement
+```
+
+The lead source should be recorded as:
+
+```text
+AI_CHATBOT
+```
+
+---
+
+# 14. Conversation Session
+
+Each active chat should have a session context.
+
+The session may contain:
+
+```json
+{
+  "session_id": "uuid",
+  "requirements": {
+    "location": "Hyderabad",
+    "property_type": "Villa",
+    "bhk": 3,
+    "budget_min": null,
+    "budget_max": 10000000
+  },
+  "last_intent": "PROPERTY_SEARCH",
+  "selected_property_ids": []
+}
+```
+
+The system should preserve enough context for natural follow-up questions.
+
+Example:
+
+```text
+User:
+Show me 3 BHK options.
+
+Assistant:
+What location are you considering?
+
+User:
+Kondapur.
+
+Assistant:
+Here are the 3 BHK properties available in Kondapur...
+```
+
+---
+
+# 15. Error and Fallback Requirements
+
+The system must gracefully handle:
+
+### No matching properties
+
+```text
+I couldn't find an exact match for those requirements.
+
+Would you like me to expand the budget range or try nearby locations?
+```
+
+### AI failure
+
+```text
+I'm having trouble processing that request right now.
+Please try again.
+```
+
+### Database failure
+
+The UI should show a generic user-friendly error while logging technical details server-side.
+
+### Invalid booking data
+
+The assistant should request correction instead of creating an invalid booking.
+
+---
+
+# 16. Security Requirements
+
+The application shall:
+
+- Store API keys only in environment variables.
+- Never expose OpenAI credentials to the frontend.
+- Validate all client inputs server-side.
+- Sanitize and validate structured AI outputs.
+- Use parameterized database queries through SQLAlchemy.
+- Apply rate limiting to chat APIs.
+- Avoid storing unnecessary sensitive information.
+- Protect internal system prompts and implementation details.
+- Log operational failures without exposing secrets.
+
+---
+
+# 17. Performance Requirements
+
+Target initial assignment-level expectations:
+
+- Chat API should provide a visible response state quickly.
+- Database property searches should be lightweight and indexed.
+- API should support concurrent chat requests appropriate to the demo environment.
+- Frontend should not freeze while waiting for AI responses.
+- Booking confirmation should be returned only after successful persistence.
+
+The architecture should permit later introduction of asynchronous processing and streaming responses.
+
+---
+
+# 18. Observability and Logging
+
+The backend should log:
+
+- Request ID
+- Session ID
+- API route
+- Request duration
+- AI request success/failure
+- Database errors
+- Booking creation success/failure
+- Unexpected exceptions
+
+Do not log API keys or sensitive customer information unnecessarily.
+
+---
+
+# 19. Success Metrics
+
+The initial product should track:
+
+### Engagement
+
+- Total chat sessions
+- Messages per session
+- Property searches
+- Properties viewed
+- Comparison requests
+
+### Conversion
+
+- Requirement-complete conversations
+- Leads created
+- Site-visit requests
+- Completed bookings
+
+### Quality
+
+- No-match rate
+- AI fallback rate
+- Booking validation failure rate
+- Customer feedback where implemented
+
+### Primary assignment success metric
+
+The complete journey should work end-to-end:
+
+```text
+Chat
+→ Requirement Collection
+→ Property Search
+→ Recommendation
+→ Comparison
+→ Site Visit Booking
+```
+
+---
+
+# 20. Acceptance Criteria
+
+## AC-01 — Chat
+
+**Given** a website visitor opens the chatbot  
+**When** the visitor sends a valid message  
+**Then** the backend processes it and the assistant returns a relevant response.
+
+## AC-02 — Requirement Collection
+
+**Given** a customer provides property requirements in natural language  
+**When** the message is processed  
+**Then** the system extracts the supported fields and retains them in the active session.
+
+## AC-03 — Property Recommendation
+
+**Given** valid requirements  
+**When** the customer requests recommendations  
+**Then** the backend returns matching database properties.
+
+## AC-04 — Budget Search
+
+**Given** a customer enters a budget such as "under 80 lakhs"  
+**When** the search is executed  
+**Then** the system converts the budget into a numeric range and returns matching properties.
+
+## AC-05 — Location Search
+
+**Given** a customer requests a location  
+**When** the search is executed  
+**Then** available properties from that location are returned.
+
+## AC-06 — Comparison
+
+**Given** two or more valid property IDs  
+**When** the customer asks to compare them  
+**Then** the system returns a structured comparison based on database data.
+
+## AC-07 — Site Visit
+
+**Given** a customer selects a property and provides valid date/time information  
+**When** the customer confirms the booking  
+**Then** the system stores the site visit request and returns a booking reference.
+
+---
+
+# 21. MVP Scope
+
+The MVP contains exactly these seven customer-facing capabilities:
+
+```text
+1. AI Conversation
+2. Requirement Collection
+3. Smart Property Recommendation
+4. Budget-Based Search
+5. Location-Based Search
+6. Property Comparison
+7. Site Visit Booking
+```
+
+Additional infrastructure such as lead persistence, session management, logging, validation, and security exists to support these capabilities.
+
+---
+
+# 22. Future Enhancements
+
+Potential future releases may include:
+
+- Agent handoff
+- Lead scoring
+- Customer login
+- Admin dashboard
+- WhatsApp integration
+- Voice assistant
+- Multilingual support
+- Geographic radius search
+- Calendar integration
+- Email/SMS notifications
+- CRM integration
+- Analytics dashboard
+- RAG knowledge base
+- Recommendation learning based on user behavior
+
+These are not required for the current MVP.
+
+---
+
+# 23. Product Principles
+
+### 1. Database Is the Source of Truth
+
+The assistant must use actual database records for property facts.
+
+### 2. AI Assists, Backend Decides
+
+AI interprets requests; business logic determines valid actions and data.
+
+### 3. Conversational Over Form-Based
+
+Customers should be able to provide information naturally instead of completing a large form.
+
+### 4. Minimal Friction
+
+Ask only questions necessary to move the customer toward a useful recommendation or booking.
+
+### 5. No Hallucinated Inventory
+
+The assistant must not fabricate properties, prices, amenities, availability, or booking details.
+
+### 6. Modular Architecture
+
+AI services, property search, booking, database access, and APIs should remain independently maintainable.
+
+---
+
+# 24. Final Product Definition
+
+The final MVP is a website-based **AI Property Sales Assistant** that behaves as a conversational sales representative.
+
+A successful session should feel like:
+
+```text
+Customer:
+Hi
+
+AI:
+Hi! I can help you find a property based on your budget,
+location, and requirements.
+
+Customer:
+I need a 3 BHK in Hyderabad under 1 crore.
+
+AI:
+Got it. I'll look for 3 BHK properties in Hyderabad
+within your ₹1 Cr budget.
+
+[Property Results]
+
+Customer:
+Compare the first two.
+
+AI:
+[Comparison]
+
+Customer:
+I want to visit the first one.
+
+AI:
+Sure. What date would you prefer?
+
+Customer:
+Sunday at 11 AM.
+
+AI:
+[Booking Confirmation]
+```
+
+The product is complete when this journey works reliably from the website UI through the Python API, AI service, database search, comparison workflow, and site-visit persistence.
