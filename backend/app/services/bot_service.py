@@ -97,7 +97,67 @@ class SalesBotService:
 
         import httpx
 
-        # 1. Try Gemini API
+        # Detect Groq Key (gsk_...) or Grok Key (xai-...) or explicit settings
+        groq_key = (
+            context.get("groq_api_key") or 
+            context.get("grok_api_key") or 
+            settings.GROQ_API_KEY or 
+            settings.GROK_API_KEY or
+            (settings.OPENAI_API_KEY if settings.OPENAI_API_KEY.startswith("gsk_") else None)
+        )
+
+        # 1. Try Groq Cloud (Ultra-fast LLM inference)
+        if groq_key:
+            try:
+                groq_models = [
+                    settings.GROQ_MODEL or "openai/gpt-oss-20b",
+                    "openai/gpt-oss-20b",
+                    "groq/compound",
+                    "qwen/qwen3.8-27b"
+                ]
+                headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
+                
+                messages = [{"role": "system", "content": system_prompt}]
+                for h in history[-4:]:
+                    messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
+                messages.append({"role": "user", "content": message})
+
+                with httpx.Client(timeout=8.0) as client:
+                    for mod in groq_models:
+                        payload = {
+                            "model": mod,
+                            "messages": messages,
+                            "temperature": 0.6,
+                            "max_tokens": 500
+                        }
+                        resp = client.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload)
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            return data["choices"][0]["message"]["content"]
+            except Exception:
+                pass
+
+        # 2. Try xAI Grok API (if using xai-... key)
+        xai_key = context.get("xai_api_key") or (settings.GROK_API_KEY if settings.GROK_API_KEY.startswith("xai-") else None)
+        if xai_key:
+            try:
+                url = "https://api.x.ai/v1/chat/completions"
+                headers = {"Authorization": f"Bearer {xai_key}", "Content-Type": "application/json"}
+                payload = {
+                    "model": "grok-beta",
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": message}
+                    ]
+                }
+                with httpx.Client(timeout=8.0) as client:
+                    resp = client.post(url, headers=headers, json=payload)
+                    if resp.status_code == 200:
+                        return resp.json()["choices"][0]["message"]["content"]
+            except Exception:
+                pass
+
+        # 3. Try Gemini API
         gemini_key = context.get("gemini_api_key") or settings.GEMINI_API_KEY
         if gemini_key:
             try:
@@ -111,35 +171,13 @@ class SalesBotService:
             except Exception:
                 pass
 
-        # 2. Try Groq API
-        groq_key = context.get("groq_api_key") or settings.GROQ_API_KEY
-        if groq_key:
-            try:
-                url = "https://api.groq.com/openai/v1/chat/completions"
-                headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
-                payload = {
-                    "model": "llama3-8b-8192",
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": message}
-                    ],
-                    "temperature": 0.6
-                }
-                with httpx.Client(timeout=6.0) as client:
-                    resp = client.post(url, headers=headers, json=payload)
-                    if resp.status_code == 200:
-                        return resp.json()["choices"][0]["message"]["content"]
-            except Exception:
-                pass
-
-        # 3. Try OpenAI API
+        # 4. Try OpenAI API (Standard sk-... key)
         openai_key = context.get("openai_api_key") or settings.OPENAI_API_KEY
-        if openai_key:
+        if openai_key and openai_key.startswith("sk-"):
             try:
                 url = "https://api.openai.com/v1/chat/completions"
                 headers = {"Authorization": f"Bearer {openai_key}", "Content-Type": "application/json"}
                 messages = [{"role": "system", "content": system_prompt}]
-                # append recent history
                 for h in history[-4:]:
                     messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
                 messages.append({"role": "user", "content": message})
@@ -275,20 +313,28 @@ class SalesBotService:
 
         # 2. Extract entities
         entities = cls.extract_entities(msg)
+        msg_lower = msg.lower()
 
-        # 3. Attempt External LLM first (Gemini / Groq / OpenAI)
-        llm_reply = cls.call_external_llm(msg, formatted_history, req.context or {})
-        
-        if llm_reply:
-            reply = llm_reply
-            intent = "llm_generated"
-            suggested_actions = ["Schedule Demo", "Calculate BANT Score", "View Pricing Plans"]
-            score_change = 10
-        else:
-            # Fall back to zero-failure conversational engine
+        # Check for direct booking action trigger
+        is_booking_action = any(p in msg_lower for p in ["morning slot", "afternoon slot", "book morning", "book afternoon", "confirm demo", "confirm slot"]) or ("slot" in msg_lower and ("morning" in msg_lower or "afternoon" in msg_lower))
+
+        if is_booking_action:
             reply, intent, suggested_actions, score_change = cls.synthesize_conversational_response(
                 msg, entities, len(history_records)
             )
+        else:
+            # 3. Attempt External LLM first (Groq / Gemini / OpenAI)
+            llm_reply = cls.call_external_llm(msg, formatted_history, req.context or {})
+            if llm_reply:
+                reply = llm_reply
+                intent = "llm_generated"
+                suggested_actions = ["Schedule Demo", "Calculate BANT Score", "View Pricing Plans"]
+                score_change = 10
+            else:
+                # Fall back to zero-failure conversational engine
+                reply, intent, suggested_actions, score_change = cls.synthesize_conversational_response(
+                    msg, entities, len(history_records)
+                )
 
         # 4. Handle Lead Synchronization
         lead_obj: Optional[Lead] = None

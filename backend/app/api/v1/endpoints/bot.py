@@ -25,13 +25,13 @@ def get_bot_status():
     Check the Sales Assistant Bot status, active providers, and operational configuration.
     """
     providers = []
+    if settings.GROQ_API_KEY or settings.GROK_API_KEY:
+        providers.append(f"Groq Cloud ({settings.GROQ_MODEL or 'openai/gpt-oss-20b'})")
     if settings.GEMINI_API_KEY:
         providers.append("Google Gemini (gemini-1.5-flash)")
-    if settings.GROQ_API_KEY:
-        providers.append("Groq Cloud (llama3-8b-8192)")
-    if settings.OPENAI_API_KEY:
+    if settings.OPENAI_API_KEY and settings.OPENAI_API_KEY.startswith("sk-"):
         providers.append(f"OpenAI ({settings.OPENAI_MODEL or 'gpt-3.5-turbo'})")
-    providers.append("Built-in Deterministic NLP Synthesizer (High-Resilience Active)")
+    providers.append("Built-in Deterministic NLP Synthesizer (Zero-Failure Fallback)")
 
     return {
         "status": "online",
