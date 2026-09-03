@@ -194,5 +194,57 @@ export const apiService = {
         created_at: new Date().toISOString()
       };
     }
+  },
+
+  // SalesBot API Endpoints
+  async getBotStatus() {
+    const res = await fetch(`${API_BASE}/bot/status`);
+    if (!res.ok) throw new Error('Failed to fetch bot status');
+    return await res.json();
+  },
+
+  async sendBotChat(message, sessionId = null, leadId = null, context = {}) {
+    const res = await fetch(`${API_BASE}/bot/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        session_id: sessionId,
+        lead_id: leadId,
+        context
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Bot API chat error');
+    }
+    return await res.json();
+  },
+
+  async getBotSessionHistory(sessionId) {
+    const res = await fetch(`${API_BASE}/bot/sessions/${sessionId}/history`);
+    if (!res.ok) throw new Error('Failed to fetch bot session history');
+    return await res.json();
+  },
+
+  async qualifyProspect(qualifyData) {
+    const res = await fetch(`${API_BASE}/bot/qualify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(qualifyData)
+    });
+    if (!res.ok) throw new Error('Failed to qualify prospect');
+    return await res.json();
+  },
+
+  async bookBotDemo(bookingData) {
+    const res = await fetch(`${API_BASE}/bot/book`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bookingData)
+    });
+    if (!res.ok) throw new Error('Failed to book bot demo');
+    return await res.json();
   }
 };
+
