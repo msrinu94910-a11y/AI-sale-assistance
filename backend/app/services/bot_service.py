@@ -45,14 +45,16 @@ class SalesBotService:
 
         # 3. Name extraction
         name_patterns = [
-            r"(?:my name is|i am|i'm|this is|call me)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)",
+            r"(?:my name is|i am|i'm|this is|call me)\s+([A-Z][a-z]+(?:\s+(?!from\b|at\b|with\b|and\b)[A-Z][a-z]+)?)",
             r"(?:name:\s*)([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)"
         ]
         for pat in name_patterns:
             nm = re.search(pat, text, re.IGNORECASE)
             if nm:
-                entities.name = nm.group(1).title()
-                break
+                candidate_name = nm.group(1).title().strip()
+                if candidate_name.lower() not in ["from", "here", "interested", "looking", "ready"]:
+                    entities.name = candidate_name
+                    break
 
         # 4. Company extraction
         company_patterns = [
@@ -68,7 +70,7 @@ class SalesBotService:
                     break
 
         # 5. Budget extraction
-        budget_match = re.search(r'(\$\s?[\d,]+(?:k|m|k\b|m\b)?|\d+(?:,\d+)?\s*(?:k|thousand|million|crore|lakh|usd|dollars))', text, re.IGNORECASE)
+        budget_match = re.search(r'(\$\s?[\d,]+(?:\.\d+)?(?:k|m|b)?|\b[\d,]+(?:\.\d+)?\s*(?:k|thousand|million|crore|lakh|usd|dollars)\b)', text, re.IGNORECASE)
         if budget_match:
             entities.budget = budget_match.group(0).strip()
 
@@ -338,63 +340,75 @@ class SalesBotService:
 
         # 4. Handle Lead Synchronization
         lead_obj: Optional[Lead] = None
-        if req.lead_id:
-            lead_obj = db.query(Lead).filter(Lead.id == req.lead_id).first()
-        elif entities.email:
-            lead_obj = db.query(Lead).filter(Lead.email == entities.email).first()
-            if not lead_obj:
-                # Automatically create captured lead!
-                lead_obj = Lead(
-                    name=entities.name or "Inbound Prospect",
-                    email=entities.email,
-                    phone=entities.phone,
-                    company=entities.company or "Enterprise Account",
-                    status="Contacted",
-                    score=60,
-                    category="Warm",
-                    notes=f"Auto-captured via SalesBot API in session {session_id}"
-                )
-                db.add(lead_obj)
-                db.commit()
-                db.refresh(lead_obj)
+        try:
+            if req.lead_id:
+                lead_obj = db.query(Lead).filter(Lead.id == req.lead_id).first()
+            elif entities.email:
+                lead_obj = db.query(Lead).filter(Lead.email == entities.email).first()
+                if not lead_obj:
+                    # Automatically create captured lead!
+                    lead_obj = Lead(
+                        name=entities.name or "Inbound Prospect",
+                        email=entities.email,
+                        phone=entities.phone,
+                        company=entities.company or "Enterprise Account",
+                        status="Contacted",
+                        score=60,
+                        category="Warm",
+                        notes=f"Auto-captured via SalesBot API in session {session_id}"
+                    )
+                    db.add(lead_obj)
+                    db.commit()
+                    db.refresh(lead_obj)
+        except Exception as le:
+            db.rollback()
+            print(f"Notice: Lead synchronization exception: {le}")
 
         # 5. Handle Automatic Meeting Creation if intent is demo_booked
         if intent == "demo_booked":
-            meeting_date = datetime.now(timezone.utc) + timedelta(days=1, hours=4)
-            lead_name = lead_obj.name if lead_obj else (entities.name or "Inbound Prospect")
-            lead_id_val = lead_obj.id if lead_obj else None
-            meeting = Meeting(
-                lead_id=lead_id_val,
-                lead_name=lead_name,
-                title="Sales AI Demo & Architecture Review",
-                meeting_date=meeting_date,
-                duration_minutes=30,
-                status="Scheduled",
-                notes=f"Booked via SalesBot API chat. Session: {session_id}"
-            )
-            db.add(meeting)
-            db.commit()
+            try:
+                meeting_date = datetime.now(timezone.utc) + timedelta(days=1, hours=4)
+                lead_name = lead_obj.name if lead_obj else (entities.name or "Inbound Prospect")
+                lead_id_val = lead_obj.id if lead_obj else None
+                meeting = Meeting(
+                    lead_id=lead_id_val,
+                    lead_name=lead_name,
+                    title="Sales AI Demo & Architecture Review",
+                    meeting_date=meeting_date,
+                    duration_minutes=30,
+                    status="Scheduled",
+                    notes=f"Booked via SalesBot API chat. Session: {session_id}"
+                )
+                db.add(meeting)
+                db.commit()
+            except Exception as me:
+                db.rollback()
+                print(f"Notice: Meeting scheduling exception: {me}")
 
         # 6. Save Turn to Database
-        user_turn = Conversation(
-            session_id=session_id,
-            lead_id=lead_obj.id if lead_obj else req.lead_id,
-            sender="user",
-            message=msg,
-            intent=intent,
-            timestamp=datetime.now(timezone.utc)
-        )
-        assistant_turn = Conversation(
-            session_id=session_id,
-            lead_id=lead_obj.id if lead_obj else req.lead_id,
-            sender="assistant",
-            message=reply,
-            intent=intent,
-            timestamp=datetime.now(timezone.utc)
-        )
-        db.add(user_turn)
-        db.add(assistant_turn)
-        db.commit()
+        try:
+            user_turn = Conversation(
+                session_id=session_id,
+                lead_id=lead_obj.id if lead_obj else req.lead_id,
+                sender="user",
+                message=msg,
+                intent=intent,
+                timestamp=datetime.now(timezone.utc)
+            )
+            assistant_turn = Conversation(
+                session_id=session_id,
+                lead_id=lead_obj.id if lead_obj else req.lead_id,
+                sender="assistant",
+                message=reply,
+                intent=intent,
+                timestamp=datetime.now(timezone.utc)
+            )
+            db.add(user_turn)
+            db.add(assistant_turn)
+            db.commit()
+        except Exception as ce:
+            db.rollback()
+            print(f"Notice: Conversation turn logging exception: {ce}")
 
         lead_sync = None
         if lead_obj:

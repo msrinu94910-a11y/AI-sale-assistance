@@ -16,7 +16,13 @@ import {
   Mail,
   DollarSign
 } from 'lucide-react';
+import { marked } from 'marked';
 import { apiService } from '../../services/api';
+
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+});
 
 export function BotPlayground({ onLeadOrMeetingUpdated }) {
   const [messages, setMessages] = useState([]);
@@ -248,11 +254,17 @@ export function BotPlayground({ onLeadOrMeetingUpdated }) {
                         color: isUser ? '#ffffff' : '#0c192c',
                         fontSize: '0.9rem',
                         lineHeight: '1.5',
-                        whiteSpace: 'pre-wrap',
                         boxShadow: isUser ? '0 4px 12px rgba(0, 114, 255, 0.2)' : 'none',
                         border: isUser ? 'none' : '1px solid #e2e8f0'
                       }}>
-                        {m.text}
+                        {isUser ? (
+                          <div style={{ whiteSpace: 'pre-wrap' }}>{m.text}</div>
+                        ) : (
+                          <div 
+                            className="markdown-content"
+                            dangerouslySetInnerHTML={{ __html: marked.parse(m.text || '') }} 
+                          />
+                        )}
                       </div>
 
                       {/* Bot Response Metadata Chips */}

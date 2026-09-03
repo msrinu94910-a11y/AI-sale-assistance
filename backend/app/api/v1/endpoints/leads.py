@@ -76,7 +76,8 @@ DEFAULT_LEADS = [
     }
 ]
 
-@router.get("/", response_model=List[LeadResponse])
+@router.get("", response_model=List[LeadResponse])
+@router.get("/", response_model=List[LeadResponse], include_in_schema=False)
 def get_leads(category: Optional[str] = None, db: Session = Depends(get_db)):
     leads = db.query(Lead).all()
     if not leads:
@@ -90,7 +91,8 @@ def get_leads(category: Optional[str] = None, db: Session = Depends(get_db)):
         leads = [l for l in leads if l.category.lower() == category.lower()]
     return leads
 
-@router.post("/", response_model=LeadResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=LeadResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=LeadResponse, status_code=status.HTTP_201_CREATED, include_in_schema=False)
 def create_lead(lead_in: LeadCreate, db: Session = Depends(get_db)):
     eval_result = LeadQualificationEngine.evaluate_lead(
         budget=lead_in.budget or 50,

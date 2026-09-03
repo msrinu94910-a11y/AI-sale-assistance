@@ -33,14 +33,16 @@ DEFAULT_MEETINGS = [
     }
 ]
 
-@router.get("/", response_model=List[MeetingResponse])
+@router.get("", response_model=List[MeetingResponse])
+@router.get("/", response_model=List[MeetingResponse], include_in_schema=False)
 def get_meetings(db: Session = Depends(get_db)):
     meetings = db.query(Meeting).all()
     if not meetings:
         return DEFAULT_MEETINGS
     return meetings
 
-@router.post("/", response_model=MeetingResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=MeetingResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=MeetingResponse, status_code=status.HTTP_201_CREATED, include_in_schema=False)
 def create_meeting(meeting_in: MeetingCreate, db: Session = Depends(get_db)):
     meeting = Meeting(
         lead_id=meeting_in.lead_id,
