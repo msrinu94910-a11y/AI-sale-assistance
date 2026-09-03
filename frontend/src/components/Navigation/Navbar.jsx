@@ -5,8 +5,7 @@ import {
   Users, 
   BarChart3, 
   Calendar, 
-  Plus,
-  Sparkles
+  Plus
 } from 'lucide-react';
 
 export function Navbar({ activeTab, setActiveTab, onOpenLeadModal, onOpenMeetingModal }) {
@@ -29,7 +28,7 @@ export function Navbar({ activeTab, setActiveTab, onOpenLeadModal, onOpenMeeting
     }}>
       <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         
-        {/* Floating Capsule Dark Dock (Matching attached screenshot layout) */}
+        {/* Floating Capsule Dark Dock */}
         <div style={{
           width: '100%',
           display: 'flex',
@@ -70,20 +69,6 @@ export function Navbar({ activeTab, setActiveTab, onOpenLeadModal, onOpenMeeting
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontWeight: '800', fontSize: '1.2rem', letterSpacing: '-0.02em', color: '#ffffff', fontFamily: 'var(--font-main)' }}>
                 SalesBot <span style={{ color: '#ff9f00', fontSize: '1rem', fontWeight: '800' }}>AI</span>
-              </span>
-              <span style={{
-                fontSize: '0.62rem',
-                fontWeight: '700',
-                padding: '2px 8px',
-                borderRadius: '999px',
-                background: 'rgba(16, 185, 129, 0.2)',
-                color: '#10b981',
-                border: '1px solid rgba(16, 185, 129, 0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}>
-                <span className="pulse-dot"></span> Online
               </span>
             </div>
           </div>
