@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navigation/Navbar';
 import { DashboardView } from './components/Dashboard/DashboardView';
-import { ChatWindow } from './components/ChatBot/ChatWindow';
 import { LeadList } from './components/LeadCard/LeadList';
 import { LeadDetail } from './components/LeadCard/LeadDetail';
 import { AnalyticsView } from './components/Analytics/AnalyticsView';
@@ -108,12 +107,6 @@ export function App() {
             setActiveTab={setActiveTab}
             onOpenLeadModal={() => setIsLeadModalOpen(true)}
             onOpenMeetingModal={() => setIsMeetingModalOpen(true)}
-          />
-        )}
-
-        {activeTab === 'chat' && (
-          <ChatWindow
-            onLeadAdded={loadInitialData}
           />
         )}
 

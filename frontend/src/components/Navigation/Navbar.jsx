@@ -1,6 +1,5 @@
 import React from 'react';
 import { 
-  Bot, 
   LayoutDashboard, 
   Users, 
   BarChart3, 
@@ -11,7 +10,6 @@ import {
 export function Navbar({ activeTab, setActiveTab, onOpenLeadModal, onOpenMeetingModal }) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'chat', label: 'AI Sales Assistant', icon: Bot },
     { id: 'leads', label: 'Leads & Scoring', icon: Users },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'meetings', label: 'Meetings', icon: Calendar },

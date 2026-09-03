@@ -5,7 +5,6 @@ import {
   TrendingUp, 
   Calendar, 
   DollarSign, 
-  Bot, 
   ArrowUpRight, 
   CheckCircle2, 
   Clock, 
@@ -73,7 +72,7 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
               <span className="badge badge-gold">
-                <Sparkles size={14} /> AI Sales Assistant Active
+                <Sparkles size={14} /> Sales Intelligence Active
               </span>
               <span style={{ fontSize: '0.8rem', color: '#9fb3c8' }}>Updated 2 minutes ago</span>
             </div>
@@ -81,14 +80,14 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
               Sales Pipeline & Lead Intelligence Dashboard
             </h1>
             <p style={{ color: '#bcccdc', maxWidth: '650px', fontSize: '0.95rem' }}>
-              Real-time BANT lead qualification, AI sales conversation analytics, and pipeline velocity metrics.
+              Real-time BANT lead qualification, pipeline velocity metrics, and automated demo scheduling.
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button className="btn btn-primary" onClick={() => setActiveTab('chat')}>
-              <Bot size={18} />
-              <span>Launch AI Sales Bot</span>
+            <button className="btn btn-primary" onClick={() => setActiveTab('leads')}>
+              <Users size={18} />
+              <span>View All Leads</span>
             </button>
             <button className="btn btn-gold" onClick={onOpenLeadModal}>
               <span>+ Add New Lead</span>
