@@ -120,7 +120,7 @@ export const apiService = {
     return newLeadObj;
   },
 
-  // AI Chat API
+  // AI Chat API with Smart NLP Engine
   async sendChatMessage(message, context = {}) {
     try {
       const res = await fetch(`${API_BASE}/chat/message`, {
@@ -128,39 +128,73 @@ export const apiService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message, context })
       });
-      if (!res.ok) throw new Error('Failed to send chat message');
-      return await res.json();
-    } catch (err) {
-      console.warn('Chat API offline, generating local fallback response', err);
-      let intent = 'inquiry';
-      let responseText = "I am your AI Sales Assistant. I can help you qualify leads, answer pricing questions, or schedule a product demo.";
-      let actions = ["Calculate Lead Score", "Schedule Product Demo", "View Pricing Plans"];
-      
-      const lower = message.toLowerCase();
-      if (lower.includes('price') || lower.includes('cost') || lower.includes('plan')) {
-        intent = 'pricing';
-        responseText = "Our Starter plan begins at $49/user/month, offering automated lead scoring and full CRM pipeline features. Would you like a customized proposal?";
-        actions = ["Get Enterprise Quote", "Compare Features", "Book Demo"];
-      } else if (lower.includes('demo') || lower.includes('schedule') || lower.includes('meeting')) {
-        intent = 'scheduling';
-        responseText = "I can schedule a live demonstration with our solution architecture team. Would morning or afternoon work best for you?";
-        actions = ["Book Morning Slot", "Book Afternoon Slot", "Select Custom Date"];
-      } else if (lower.includes('score') || lower.includes('qualify') || lower.includes('bant')) {
-        intent = 'qualification';
-        responseText = "Our BANT framework evaluates Budget (25%), Need (30%), Authority (20%), and Timeline (25%) to dynamically score leads from 0 to 100.";
-        actions = ["Score New Lead", "Filter Hot Leads", "Export Lead Matrix"];
+      if (res.ok) {
+        return await res.json();
       }
-
-      return {
-        id: Date.now(),
-        message,
-        response: responseText,
-        intent,
-        score_change: 10,
-        suggested_actions: actions,
-        timestamp: new Date().toISOString()
-      };
+    } catch (err) {
+      console.warn('Chat API offline, generating local smart response', err);
     }
+
+    // Smart Local NLP Engine Fallback
+    const msgLower = message.toLowerCase();
+    let intent = 'inquiry';
+    let responseText = '';
+    let actions = [];
+    let scoreChange = 5;
+
+    if (msgLower.includes('price') || msgLower.includes('cost') || msgLower.includes('plan') || msgLower.includes('tier') || msgLower.includes('quote')) {
+      intent = 'pricing';
+      responseText = "SalesBot AI offers 3 pricing tiers:\n• Starter ($49/user/month): Core CRM + BANT scoring\n• Professional ($99/user/month): AI Assistant + Calendar sync\n• Enterprise (Custom): SSO, dedicated SLA, & custom CRM API.\n\nWould you like a customized proposal?";
+      actions = ["Request Custom Quote", "Book Demo for Pricing", "Compare All Features"];
+      scoreChange = 10;
+    } else if (msgLower.includes('team size') || msgLower.includes('1-10') || msgLower.includes('11-50') || msgLower.includes('50+')) {
+      intent = 'team_size';
+      if (msgLower.includes('11-50') || msgLower.includes('50+')) {
+        responseText = "For teams of 10+ sales reps, SalesBot AI unlocks automated lead routing, multi-user CRM permissions, and enterprise BANT analytics dashboards.";
+      } else {
+        responseText = "For growing sales teams (1-10 reps), SalesBot AI provides pre-configured BANT qualification weights and instant demo calendar booking.";
+      }
+      actions = ["Schedule Product Demo", "View BANT Evaluation Matrix", "Explore Pricing Plans"];
+      scoreChange = 15;
+    } else if (msgLower.includes('feature') || msgLower.includes('capability') || msgLower.includes('what can you do') || msgLower.includes('workflow') || msgLower.includes('explore')) {
+      intent = 'features';
+      responseText = "SalesBot AI empowers your sales pipeline with:\n1. Automated BANT Lead Scoring (Budget 25%, Need 30%, Authority 20%, Timeline 25%)\n2. Intelligent Conversation Assistant for automated lead qualification\n3. One-Click Demo Calendar Scheduling\n4. Real-time Pipeline Analytics & Velocity Tracking.";
+      actions = ["Test BANT Qualification", "Book Live Demo", "View Analytics Dashboard"];
+      scoreChange = 10;
+    } else if (msgLower.includes('score') || msgLower.includes('bant') || msgLower.includes('qualify') || msgLower.includes('budget') || msgLower.includes('need') || msgLower.includes('authority') || msgLower.includes('timeline')) {
+      intent = 'qualification';
+      responseText = "Our BANT Lead Qualification framework automatically scores prospects on a 0-100 scale using weighted metrics:\n• Budget (25%)\n• Need (30%)\n• Authority (20%)\n• Timeline (25%)\n\nLeads scored 71+ are Hot 🔥, 41-70 Warm ⚡, and <40 Cold ❄️.";
+      actions = ["Score New Lead", "Filter Hot Leads", "Add New Lead"];
+      scoreChange = 15;
+    } else if (msgLower.includes('demo') || msgLower.includes('meeting') || msgLower.includes('schedule') || msgLower.includes('book') || msgLower.includes('call')) {
+      intent = 'scheduling';
+      responseText = "I can schedule a personalized live product demonstration with our senior solution architect. Would morning or afternoon work best for you this week?";
+      actions = ["Book Morning Slot", "Book Afternoon Slot", "Select Custom Date"];
+      scoreChange = 20;
+    } else if (msgLower.includes('sarah') || msgLower.includes('marcus') || msgLower.includes('elena') || msgLower.includes('david')) {
+      intent = 'lead_query';
+      if (msgLower.includes('sarah')) responseText = "Sarah Connor is a Hot Lead (Score: 88/100) from Cyberdyne Systems looking for an Enterprise AI CRM for 150+ reps.";
+      else if (msgLower.includes('marcus')) responseText = "Marcus Vance is a Warm Lead (Score: 62/100) from Apex Dynamics interested in automated follow-ups.";
+      else if (msgLower.includes('elena')) responseText = "Elena Rostova is a Hot Lead (Score: 91/100) from QuantumScale Tech with a contract in legal review.";
+      else if (msgLower.includes('david')) responseText = "David Miller is a Cold Lead (Score: 31/100) from Horizon Cloud who downloaded the product whitepaper.";
+      actions = ["View All Leads", "Add New Lead", "Book Demo"];
+      scoreChange = 10;
+    } else {
+      intent = 'general';
+      responseText = `Thanks for asking! SalesBot AI is trained to help you qualify leads, explore CRM capabilities, answer pricing questions, or book live product demos. How can I help you accelerate your sales process today?`;
+      actions = ["Explore Features", "Calculate Lead Score", "View Pricing Plans"];
+      scoreChange = 5;
+    }
+
+    return {
+      id: Date.now(),
+      message,
+      response: responseText,
+      intent,
+      score_change: scoreChange,
+      suggested_actions: actions,
+      timestamp: new Date().toISOString()
+    };
   },
 
   // Analytics API

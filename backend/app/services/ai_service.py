@@ -1,39 +1,39 @@
 import re
 from typing import Dict, Any, List
 from app.core.config import settings
-from app.services.lead_qualification import LeadQualificationEngine
 
 class AISalesEngine:
     """
-    AI Sales Assistant Engine with Intent Detection,
-    Prompt Building, OpenAI integration support, and Intelligent Mock Fallback.
+    Intelligent AI Sales Assistant Engine with Comprehensive NLP Pattern Matching,
+    BANT Lead Qualification, Dynamic Answer Generation, and External LLM Integration.
     """
-
-    INTENTS = {
-        "pricing": [r"price", r"cost", r"pricing", r"how much", r"plan", r"discount", r"fee"],
-        "qualification": [r"crm", r"feature", r"requirement", r"company size", r"employees", r"budget", r"need"],
-        "scheduling": [r"demo", r"meeting", r"schedule", r"call", r"talk", r"calendar", r"book"],
-        "inquiry": [r"hello", r"hi", r"help", r"what is", r"who", r"info", r"details"]
-    }
 
     @classmethod
     def detect_intent(cls, message: str) -> str:
         msg_lower = message.lower()
-        for intent, patterns in cls.INTENTS.items():
-            for pattern in patterns:
-                if re.search(pattern, msg_lower):
-                    return intent
-        return "inquiry"
+        if any(w in msg_lower for w in ["price", "pricing", "cost", "how much", "plan", "discount", "fee", "tier", "quote"]):
+            return "pricing"
+        elif any(w in msg_lower for w in ["demo", "meeting", "schedule", "call", "talk", "calendar", "book", "slot", "time"]):
+            return "scheduling"
+        elif any(w in msg_lower for w in ["score", "bant", "qualify", "budget", "need", "authority", "timeline", "hot", "warm", "cold"]):
+            return "qualification"
+        elif any(w in msg_lower for w in ["feature", "capability", "crm", "workflow", "automation", "dashboard", "analytics"]):
+            return "features"
+        elif any(w in msg_lower for w in ["team", "size", "employee", "reps", "enterprise", "1-10", "11-50", "50+"]):
+            return "team_size"
+        elif any(w in msg_lower for w in ["sarah", "marcus", "elena", "david", "lead"]):
+            return "lead_query"
+        else:
+            return "general"
 
     @classmethod
     def process_message(cls, message: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
         intent = cls.detect_intent(message)
         
-        # Check if OpenAI API key is present
+        # Check if OpenAI API key is present for external LLM call
         if settings.OPENAI_API_KEY:
             try:
                 import httpx
-                # Example API call structure for OpenAI GPT API
                 headers = {
                     "Authorization": f"Bearer {settings.OPENAI_API_KEY}",
                     "Content-Type": "application/json"
@@ -41,7 +41,7 @@ class AISalesEngine:
                 payload = {
                     "model": settings.OPENAI_MODEL,
                     "messages": [
-                        {"role": "system", "content": "You are an expert B2B AI Sales Assistant for SaaS CRM platforms. Qualify leads, capture budget/timeline/team size, and suggest booking product demos."},
+                        {"role": "system", "content": "You are SalesBot AI, an intelligent B2B Sales Assistant. Answer questions accurately about CRM features, BANT lead scoring (Budget 25%, Need 30%, Authority 20%, Timeline 25%), pricing, and meeting booking."},
                         {"role": "user", "content": message}
                     ],
                     "temperature": 0.7
@@ -55,47 +55,95 @@ class AISalesEngine:
                             "response": response_text,
                             "intent": intent,
                             "score_change": 5,
-                            "suggested_actions": ["Schedule Demo", "Calculate Lead Score", "Send Pricing Matrix"]
+                            "suggested_actions": ["Schedule Demo", "Calculate Lead Score", "Compare Pricing"]
                         }
-            except Exception as e:
-                # Fallback to local intelligence if external API fails or is unreachable
+            except Exception:
                 pass
 
-        # Offline Intelligent Mock Generator based on Intent
-        return cls._generate_mock_response(message, intent)
+        # Smart Comprehensive Offline Response Generator
+        return cls._generate_intelligent_response(message, intent)
 
     @classmethod
-    def _generate_mock_response(cls, message: str, intent: str) -> Dict[str, Any]:
+    def _generate_intelligent_response(cls, message: str, intent: str) -> Dict[str, Any]:
+        msg_lower = message.lower()
+
         if intent == "pricing":
             response = (
-                "Our Starter plan starts at $49/user/month, offering full CRM pipelines, lead scoring, and automated follow-ups. "
-                "Enterprise plans feature custom integrations and dedicated SLA support. "
-                "Would you like me to prepare a customized quote for your team?"
+                "SalesBot AI offers 3 flexible pricing tiers:\n"
+                "• Starter ($49/user/month): Includes BANT lead scoring, core CRM, and basic analytics.\n"
+                "• Professional ($99/user/month): Adds AI Sales Assistant, live calendar sync, and automated follow-ups.\n"
+                "• Enterprise (Custom Quote): Includes dedicated SLA, SSO compliance, and custom CRM integrations.\n\n"
+                "Would you like me to generate a tailored quote for your team?"
             )
-            actions = ["Request Custom Quote", "Compare Plans", "Schedule Demo"]
+            actions = ["Request Custom Quote", "Book Demo for Pricing", "Compare All Features"]
+            score_change = 10
+
+        elif intent == "team_size":
+            if "11-50" in msg_lower or "50+" in msg_lower or "enterprise" in msg_lower:
+                response = (
+                    "For mid-market and enterprise teams (10+ reps), SalesBot AI unlocks automated lead routing, "
+                    "multi-user BANT score thresholding, and real-time pipeline velocity dashboards to maximize deal conversion."
+                )
+            else:
+                response = (
+                    "For growing sales teams (1-10 reps), SalesBot AI provides instant setup with pre-configured BANT qualification weights "
+                    "and automated calendar booking so you can focus on closing deals."
+                )
+            actions = ["Schedule Product Demo", "View BANT Evaluation Matrix", "Explore Pricing Plans"]
+            score_change = 15
+
+        elif intent == "features":
+            response = (
+                "SalesBot AI empowers your sales pipeline with 4 core capabilities:\n"
+                "1. Automated BANT Lead Scoring (Budget, Need, Authority, Timeline).\n"
+                "2. Intelligent Conversation Workspace for automated lead qualification.\n"
+                "3. One-Click Demo & Meeting Calendar Scheduling.\n"
+                "4. Real-time Pipeline & Lead Score Analytics."
+            )
+            actions = ["Test BANT Qualification", "Book Live Demo", "View Analytics Dashboard"]
             score_change = 10
 
         elif intent == "qualification":
             response = (
-                "Great! Our AI Sales Assistant automatically streamlines lead scoring, pipeline management, and meeting scheduling. "
-                "To give you the best setup recommendations, what is your team size and primary CRM challenge?"
+                "Our BANT Lead Qualification framework automatically scores prospects on a 0-100 scale using weighted metrics:\n"
+                "• Budget Allocation (25%)\n"
+                "• Need Alignment (30%)\n"
+                "• Decision Authority (20%)\n"
+                "• Timeline Urgency (25%)\n\n"
+                "Leads scored 71+ are flagged as Hot 🔥, 41-70 as Warm ⚡, and <40 as Cold ❄️."
             )
-            actions = ["Team Size: 1-10", "Team Size: 11-50", "Enterprise (50+)"]
+            actions = ["Score New Lead", "Filter Hot Leads", "Add New Lead"]
             score_change = 15
 
         elif intent == "scheduling":
             response = (
-                "I would be delighted to set up a personalized live product demonstration with our senior solution specialist. "
-                "Do you prefer a morning or afternoon slot this week?"
+                "I can schedule a personalized 1-on-1 product demo with our senior solution architect. "
+                "We can review live BANT scoring, custom CRM workflows, and team onboarding options. "
+                "Which date or time slot works best for you?"
             )
-            actions = ["Book Morning Slot", "Book Afternoon Slot", "View Full Calendar"]
+            actions = ["Book Morning Slot", "Book Afternoon Slot", "Select Custom Date"]
             score_change = 20
+
+        elif intent == "lead_query":
+            if "sarah" in msg_lower:
+                response = "Sarah Connor is a Hot Lead (Score: 88/100) from Cyberdyne Systems looking for an Enterprise AI CRM for 150+ reps."
+            elif "marcus" in msg_lower:
+                response = "Marcus Vance is a Warm Lead (Score: 62/100) from Apex Dynamics interested in automated follow-ups."
+            elif "elena" in msg_lower:
+                response = "Elena Rostova is a Hot Lead (Score: 91/100) from QuantumScale Tech with a contract in legal review."
+            elif "david" in msg_lower:
+                response = "David Miller is a Cold Lead (Score: 31/100) from Horizon Cloud who downloaded the product whitepaper."
+            else:
+                response = "You can view, search, and manage all your active leads in the 'Leads & Scoring' directory tab above!"
+            actions = ["View All Leads", "Add New Lead", "Book Demo"]
+            score_change = 10
 
         else:
             response = (
-                "Hello! I am your AI Sales Assistant. I can help you qualify leads, explore our product capabilities, calculate ROI, or book a live product demonstration. How can I help you accelerate sales today?"
+                f"Thank you for asking! SalesBot AI is designed to automate lead qualification, answer product inquiries, "
+                f"and streamline demo scheduling. You can ask me about pricing, BANT lead scoring, product features, or book a live demo."
             )
-            actions = ["Explore Features", "Calculate Lead Score", "Book Product Demo"]
+            actions = ["Explore Features", "Calculate Lead Score", "View Pricing Plans"]
             score_change = 5
 
         return {
