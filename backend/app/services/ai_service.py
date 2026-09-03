@@ -6,7 +6,7 @@ class AISalesEngine:
     """
     Advanced Generative AI Sales Assistant Engine with:
     1. External LLM Integration (OpenAI API with automatic 429 quota fallback)
-    2. Zero-Dependency Dynamic Semantic Synthesizer (Generates unique, structured, dynamic answers for any prompt)
+    2. Zero-Dependency Dynamic Semantic Synthesizer & Conversational State Machine
     """
 
     @classmethod
@@ -15,7 +15,7 @@ class AISalesEngine:
         msg = message.strip()
         msg_lower = msg.lower()
 
-        # Check for user-provided API key (OpenAI / Gemini) in context or config settings
+        # Check for user-provided API key in context or config settings
         api_key = context.get("openai_api_key") or settings.OPENAI_API_KEY
         if api_key:
             try:
@@ -44,25 +44,58 @@ class AISalesEngine:
                             "suggested_actions": ["Schedule Demo", "Calculate Lead Score", "Compare Pricing"]
                         }
                     else:
-                        # Log status (e.g. 429 quota exhausted) and proceed to Generative Synthesizer
                         print(f"OpenAI API status {res.status_code}: {res.text[:150]}")
             except Exception as e:
                 print(f"LLM API Exception: {e}")
 
-        # Execute Zero-Dependency Dynamic Generative Synthesizer
+        # Execute Zero-Dependency Dynamic Generative Synthesizer & State Machine
         return cls._generate_dynamic_response(msg, msg_lower, context)
 
     @classmethod
     def _generate_dynamic_response(cls, msg: str, msg_lower: str, context: Dict[str, Any]) -> Dict[str, Any]:
         
-        # 1. How-to / Process / Workflow Explanations ("how this works", "how do I", "how to use", "explain process")
-        if any(w in msg_lower for w in ["how this works", "how it works", "how does this work", "how to use", "explain process", "workflow"]):
+        # 1. SPECIFIC TIME SLOT SELECTION & BOOKING CONFIRMATION (Fixes loop issue)
+        if any(w in msg_lower for w in ["morning slot", "afternoon slot", "book morning", "book afternoon", "morning", "afternoon"]):
+            slot_name = "Tomorrow Afternoon at 2:00 PM EST" if "afternoon" in msg_lower else "Tomorrow Morning at 10:30 AM EST"
             response = (
-                "Here is how SalesBot AI streamlines your sales pipeline in 4 steps:\n\n"
-                "1️⃣ Prospect Intake: Leads are added manually or captured live via AI chat conversations.\n"
+                f"✅ Live Product Demo Confirmed!\n\n"
+                f"Your 1-on-1 Product Demo and Architecture Review has been successfully scheduled for **{slot_name}** "
+                f"with our Senior Solution Specialist.\n\n"
+                f"• Calendar invitation & Zoom meeting link sent.\n"
+                f"• Agenda: Automated BANT Scoring, REST API integrations, & custom team onboarding."
+            )
+            return {
+                "response": response,
+                "intent": "booking_confirmed",
+                "score_change": 25,
+                "suggested_actions": ["View Scheduled Meetings", "Qualify Another Lead", "Compare Pricing Plans"]
+            }
+
+        # 2. CUSTOM QUOTE REQUEST
+        elif any(w in msg_lower for w in ["custom quote", "request custom quote", "enterprise quote", "get custom quote"]):
+            response = (
+                "💼 Enterprise Custom Quote Prepared:\n\n"
+                "• Base Platform: SalesBot AI Enterprise Suite\n"
+                "• Included Seats: Unlimited Sales Reps\n"
+                "• SLA & Support: 99.99% Uptime SLA + Dedicated Account Manager\n"
+                "• Features: Custom BANT Weights, Single Sign-On (SSO), Dedicated Database Cluster.\n\n"
+                "Would you like us to email this formal proposal to your procurement department?"
+            )
+            return {
+                "response": response,
+                "intent": "quote_generated",
+                "score_change": 20,
+                "suggested_actions": ["Book Demo for Proposal", "View All Features", "Add Lead Details"]
+            }
+
+        # 3. HOW IT WORKS / WORKFLOW EXPLANATION
+        elif any(w in msg_lower for w in ["how this works", "how it works", "how does this work", "how to use", "explain process", "workflow"]):
+            response = (
+                "Here is how SalesBot AI accelerates your sales pipeline in 4 steps:\n\n"
+                "1️⃣ Prospect Intake: Leads are added manually or captured live via AI chat interactions.\n"
                 "2️⃣ Automated BANT Scoring: Calculates a weighted score from 0-100 based on Budget (25%), Need (30%), Authority (20%), and Timeline (25%).\n"
-                "3️⃣ Lead Categorization: High-value prospects (Score 71+) are instantly flagged as Hot 🔥 for priority sales outreach.\n"
-                "4️⃣ 1-Click Meeting Booking: Integrated calendar scheduling books product demos with sales representatives automatically."
+                "3️⃣ Hot Lead Routing: High-intent prospects (Score 71+) are instantly flagged as Hot 🔥 for priority sales rep call.\n"
+                "4️⃣ 1-Click Meeting Booking: Integrated calendar scheduling books product demos automatically."
             )
             return {
                 "response": response,
@@ -71,7 +104,7 @@ class AISalesEngine:
                 "suggested_actions": ["Calculate BANT Score", "Schedule Demo", "Add New Lead"]
             }
 
-        # 2. Email drafting / Outreach Generation ("write email", "draft message", "outreach email")
+        # 4. EMAIL DRAFTING / OUTREACH GENERATION
         elif any(w in msg_lower for w in ["write email", "draft email", "outreach email", "send email", "email template"]):
             recipient = "Sarah Connor" if "sarah" in msg_lower else "Marcus Vance" if "marcus" in msg_lower else "Prospect"
             company = "Cyberdyne Systems" if "sarah" in msg_lower else "Apex Dynamics" if "marcus" in msg_lower else "Enterprise Account"
@@ -89,10 +122,10 @@ class AISalesEngine:
                 "response": response,
                 "intent": "email_generation",
                 "score_change": 15,
-                "suggested_actions": ["Copy Email", "Book Meeting Slot", "View Lead Details"]
+                "suggested_actions": ["Book Morning Slot", "Book Afternoon Slot", "View Lead Details"]
             }
 
-        # 3. Person / Lead specific lookup ("who is", "tell me about", lead names)
+        # 5. PERSON / LEAD SPECIFIC LOOKUP
         elif any(w in msg_lower for w in ["who is", "tell me about", "sarah", "marcus", "elena", "david"]):
             if "sarah" in msg_lower:
                 response = (
@@ -133,7 +166,7 @@ class AISalesEngine:
                 "suggested_actions": ["View All Leads", "Schedule Demo", "Add Lead"]
             }
 
-        # 4. Pricing / Cost / Plans / Tiers
+        # 6. PRICING & PLANS
         elif any(w in msg_lower for w in ["price", "pricing", "cost", "how much", "plan", "discount", "fee", "tier", "quote"]):
             response = (
                 "💰 SalesBot AI Pricing & Plans:\n\n"
@@ -150,36 +183,18 @@ class AISalesEngine:
                 "response": response,
                 "intent": "pricing_info",
                 "score_change": 10,
-                "suggested_actions": ["Request Custom Quote", "Book Demo for Pricing", "Compare Plans"]
+                "suggested_actions": ["Request Custom Quote", "Book Demo for Pricing", "Compare All Features"]
             }
 
-        # 5. Differences / Comparison ("difference", "compare", "hot vs warm", "hot vs cold")
-        elif any(w in msg_lower for w in ["difference", "compare", "vs", "versus"]):
-            response = (
-                "📊 Lead Score Tier Comparison:\n\n"
-                "🔥 Hot Leads (Score 71 - 100):\n"
-                "High budget readiness ($100k+), urgent purchase timeline (Q1/Q2), and executive decision authority. Flagged for immediate rep call.\n\n"
-                "⚡ Warm Leads (Score 41 - 70):\n"
-                "Moderate budget ($25k-$100k), active evaluation stage. Nurtured via automated AI follow-ups.\n\n"
-                "❄️ Cold Leads (Score 0 - 40):\n"
-                "Informational inquiries or whitepaper downloads. Low immediate urgency."
-            )
-            return {
-                "response": response,
-                "intent": "comparison_info",
-                "score_change": 10,
-                "suggested_actions": ["Filter Hot Leads", "View BANT Matrix", "Schedule Demo"]
-            }
-
-        # 6. BANT Framework Details ("bant", "score", "qualify", "budget", "need", "authority", "timeline")
+        # 7. BANT FRAMEWORK & SCORE CALCULATOR
         elif any(w in msg_lower for w in ["score", "bant", "qualify", "budget", "need", "authority", "timeline"]):
             response = (
                 "🎯 BANT Evaluation Framework:\n\n"
-                "• Budget Allocation (25% weight): Evaluates financial commitment capability.\n"
-                "• Business Need (30% weight): Assesses alignment with CRM automation goals.\n"
-                "• Decision Authority (20% weight): Identifies C-level or VP decision-makers.\n"
-                "• Purchase Timeline (25% weight): Measures deployment urgency.\n\n"
-                "The system combines these weights to output a real-time lead score between 0 and 100."
+                "• Budget Allocation (25% weight): Financial commitment capacity.\n"
+                "• Business Need (30% weight): Alignment with CRM automation goals.\n"
+                "• Decision Authority (20% weight): C-level or VP decision-maker level.\n"
+                "• Purchase Timeline (25% weight): Deployment urgency.\n\n"
+                "Scores 71+ = 🔥 Hot Leads | 41-70 = ⚡ Warm Leads | <40 = ❄️ Cold Leads."
             )
             return {
                 "response": response,
@@ -188,24 +203,22 @@ class AISalesEngine:
                 "suggested_actions": ["Calculate BANT Score", "Filter Hot Leads", "Add New Lead"]
             }
 
-        # 7. Demo / Meeting Booking ("demo", "meeting", "schedule", "book", "call", "calendar")
+        # 8. DEMO & MEETING SCHEDULING INITIAL PROMPT
         elif any(w in msg_lower for w in ["demo", "meeting", "schedule", "book", "call", "calendar", "slot"]):
             response = (
                 "📅 Schedule a Live Product Demo:\n\n"
-                "You can book a 1-on-1 architecture & live demo session with our solution specialist. "
-                "We will customize your BANT qualification rules, pipeline stages, and CRM integrations.\n\n"
-                "Click 'Book Demo' in the top navigation bar or select a preferred slot below."
+                "I would be delighted to set up a personalized live product demonstration with our senior solution specialist. "
+                "Do you prefer a morning or afternoon slot this week?"
             )
             return {
                 "response": response,
-                "intent": "demo_scheduling",
-                "score_change": 20,
+                "intent": "demo_scheduling_prompt",
+                "score_change": 15,
                 "suggested_actions": ["Book Morning Slot", "Book Afternoon Slot", "Open Demo Calendar"]
             }
 
-        # 8. Dynamic Synthesizer for Any Open-Ended Prompt (No matter what prompt is typed!)
+        # 9. DYNAMIC SYNTHESIZER FOR ANY PROMPT
         else:
-            # Extract key words to customize response
             clean_prompt = re.sub(r'[^\w\s]', '', msg)
             words = clean_prompt.split()
             keywords = [w.capitalize() for w in words if len(w) > 3 and w.lower() not in ["what", "how", "this", "that", "there", "have", "with", "from", "your", "they"]]

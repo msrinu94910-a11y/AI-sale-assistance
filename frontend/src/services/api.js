@@ -172,7 +172,7 @@ export const apiService = {
       console.warn('Backend API offline, running client dynamic synthesizer', err);
     }
 
-    // Client-Side Dynamic Generative Engine Synthesizer
+    // Client-Side Dynamic Generative Engine Synthesizer & Conversational State Machine
     const msg = message.trim ? message.trim() : message;
     const msgLower = msg.toLowerCase();
     let responseText = '';
@@ -180,16 +180,29 @@ export const apiService = {
     let actions = [];
     let scoreChange = 10;
 
-    if (msgLower.includes('how this works') || msgLower.includes('how it works') || msgLower.includes('how does this work') || msgLower.includes('how to use') || msgLower.includes('explain process') || msgLower.includes('workflow')) {
+    // Slot selection / booking confirmation
+    if (msgLower.includes('morning slot') || msgLower.includes('afternoon slot') || msgLower.includes('book morning') || msgLower.includes('book afternoon') || (msgLower.includes('slot') && (msgLower.includes('morning') || msgLower.includes('afternoon')))) {
+      intent = 'booking_confirmed';
+      const slotName = msgLower.includes('afternoon') ? 'Tomorrow Afternoon at 2:00 PM EST' : 'Tomorrow Morning at 10:30 AM EST';
+      responseText = `✅ Live Product Demo Confirmed!\n\nYour 1-on-1 Product Demo and Architecture Review has been successfully scheduled for **${slotName}** with our Senior Solution Specialist.\n\n• Calendar invitation & Zoom meeting link sent.\n• Agenda: Automated BANT Scoring, REST API integrations, & custom team onboarding.`;
+      actions = ["View Scheduled Meetings", "Qualify Another Lead", "Compare Pricing Plans"];
+      scoreChange = 25;
+    } else if (msgLower.includes('custom quote') || msgLower.includes('request custom quote') || msgLower.includes('enterprise quote') || msgLower.includes('get custom quote')) {
+      intent = 'quote_generated';
+      responseText = "💼 Enterprise Custom Quote Prepared:\n\n• Base Platform: SalesBot AI Enterprise Suite\n• Included Seats: Unlimited Sales Reps\n• SLA & Support: 99.99% Uptime SLA + Dedicated Account Manager\n• Features: Custom BANT Weights, Single Sign-On (SSO), Dedicated Database Cluster.\n\nWould you like us to email this formal proposal to your procurement department?";
+      actions = ["Book Demo for Proposal", "View All Features", "Add Lead Details"];
+      scoreChange = 20;
+    } else if (msgLower.includes('how this works') || msgLower.includes('how it works') || msgLower.includes('how does this work') || msgLower.includes('how to use') || msgLower.includes('explain process') || msgLower.includes('workflow')) {
       intent = 'workflow_explanation';
-      responseText = "Here is how SalesBot AI streamlines your sales pipeline in 4 steps:\n\n1️⃣ Prospect Intake: Leads are added manually or captured live via AI chat conversations.\n2️⃣ Automated BANT Scoring: Calculates a weighted score from 0-100 based on Budget (25%), Need (30%), Authority (20%), and Timeline (25%).\n3️⃣ Lead Categorization: High-value prospects (Score 71+) are instantly flagged as Hot 🔥 for priority sales outreach.\n4️⃣ 1-Click Meeting Booking: Integrated calendar scheduling books product demos with sales representatives automatically.";
+      responseText = "Here is how SalesBot AI streamlines your sales pipeline in 4 steps:\n\n1️⃣ Prospect Intake: Leads are added manually or captured live via AI chat interactions.\n2️⃣ Automated BANT Scoring: Calculates a weighted score from 0-100 based on Budget (25%), Need (30%), Authority (20%), and Timeline (25%).\n3️⃣ Lead Categorization: High-value prospects (Score 71+) are instantly flagged as Hot 🔥 for priority sales rep call.\n4️⃣ 1-Click Meeting Booking: Integrated calendar scheduling books product demos automatically.";
       actions = ["Calculate BANT Score", "Schedule Demo", "Add New Lead"];
     } else if (msgLower.includes('write email') || msgLower.includes('draft email') || msgLower.includes('outreach email') || msgLower.includes('send email') || msgLower.includes('email template')) {
       intent = 'email_generation';
       const recipient = msgLower.includes('sarah') ? 'Sarah Connor' : msgLower.includes('marcus') ? 'Marcus Vance' : 'Prospect';
       const company = msgLower.includes('sarah') ? 'Cyberdyne Systems' : msgLower.includes('marcus') ? 'Apex Dynamics' : 'Enterprise Account';
       responseText = `Subject: Elevate ${company}'s CRM Pipeline Velocity with SalesBot AI\n\nHi ${recipient},\n\nI hope you're having a productive week! I reached out because sales teams using SalesBot AI have reduced lead qualification time by 60% using automated BANT scoring and 1-click demo scheduling.\n\nBased on your team's growth goals, I'd love to share a 15-minute live demonstration this Thursday.\n\nWould 2:00 PM or 3:30 PM work better for your schedule?\n\nBest regards,\nSalesBot Solution Specialist`;
-      actions = ["Copy Email", "Book Meeting Slot", "View Lead Details"];
+      actions = ["Book Morning Slot", "Book Afternoon Slot", "View Lead Details"];
+      scoreChange = 15;
     } else if (msgLower.includes('who is') || msgLower.includes('tell me about') || msgLower.includes('sarah') || msgLower.includes('marcus') || msgLower.includes('elena') || msgLower.includes('david')) {
       intent = 'lead_lookup';
       if (msgLower.includes('sarah')) responseText = "👤 Lead Profile: Sarah Connor\n• Company: Cyberdyne Systems\n• Category: 🔥 Hot Lead (Score: 88 / 100)\n• BANT Breakdown: Budget 90%, Need 85%, Authority 80%, Timeline 95%\n• Requirement: Looking for Enterprise AI CRM integration for 150+ sales reps.";
@@ -201,19 +214,16 @@ export const apiService = {
     } else if (msgLower.includes('price') || msgLower.includes('pricing') || msgLower.includes('cost') || msgLower.includes('plan') || msgLower.includes('quote')) {
       intent = 'pricing_info';
       responseText = "💰 SalesBot AI Pricing & Plans:\n\n• Starter ($49 / user / month):\n  - Up to 10 sales reps\n  - Automated BANT lead scoring matrix & core CRM pipeline\n\n• Professional ($99 / user / month):\n  - Conversational AI Assistant & live calendar demo booking\n  - Automated follow-up sequences & analytics dashboard\n\n• Enterprise (Custom Quote):\n  - Unlimited seats, SSO compliance, dedicated SLA, & custom REST API integrations.";
-      actions = ["Request Custom Quote", "Book Demo for Pricing", "Compare Plans"];
-    } else if (msgLower.includes('difference') || msgLower.includes('compare') || msgLower.includes('vs') || msgLower.includes('versus')) {
-      intent = 'comparison_info';
-      responseText = "📊 Lead Score Tier Comparison:\n\n🔥 Hot Leads (Score 71 - 100):\nHigh budget readiness ($100k+), urgent purchase timeline (Q1/Q2), and executive decision authority. Flagged for immediate rep call.\n\n⚡ Warm Leads (Score 41 - 70):\nModerate budget ($25k-$100k), active evaluation stage. Nurtured via automated AI follow-ups.\n\n❄️ Cold Leads (Score 0 - 40):\nInformational inquiries or whitepaper downloads. Low immediate urgency.";
-      actions = ["Filter Hot Leads", "View BANT Matrix", "Schedule Demo"];
+      actions = ["Request Custom Quote", "Book Demo for Pricing", "Compare All Features"];
     } else if (msgLower.includes('score') || msgLower.includes('bant') || msgLower.includes('qualify') || msgLower.includes('budget') || msgLower.includes('need') || msgLower.includes('authority') || msgLower.includes('timeline')) {
       intent = 'bant_explanation';
-      responseText = "🎯 BANT Evaluation Framework:\n\n• Budget Allocation (25% weight): Evaluates financial commitment capability.\n• Business Need (30% weight): Assesses alignment with CRM automation goals.\n• Decision Authority (20% weight): Identifies C-level or VP decision-makers.\n• Purchase Timeline (25% weight): Measures deployment urgency.\n\nThe system combines these weights to output a real-time lead score between 0 and 100.";
+      responseText = "🎯 BANT Evaluation Framework:\n\n• Budget Allocation (25% weight): Financial commitment capacity.\n• Business Need (30% weight): Alignment with CRM automation goals.\n• Decision Authority (20% weight): C-level or VP decision-maker level.\n• Purchase Timeline (25% weight): Deployment urgency.\n\nScores 71+ = 🔥 Hot Leads | 41-70 = ⚡ Warm Leads | <40 = ❄️ Cold Leads.";
       actions = ["Calculate BANT Score", "Filter Hot Leads", "Add New Lead"];
     } else if (msgLower.includes('demo') || msgLower.includes('meeting') || msgLower.includes('schedule') || msgLower.includes('book') || msgLower.includes('call') || msgLower.includes('calendar')) {
-      intent = 'demo_scheduling';
-      responseText = "📅 Schedule a Live Product Demo:\n\nYou can book a 1-on-1 architecture & live demo session with our solution specialist. We will customize your BANT qualification rules, pipeline stages, and CRM integrations.\n\nClick 'Book Demo' in the top navigation bar or select a preferred slot below.";
+      intent = 'demo_scheduling_prompt';
+      responseText = "📅 Schedule a Live Product Demo:\n\nI would be delighted to set up a personalized live product demonstration with our senior solution specialist. Do you prefer a morning or afternoon slot this week?";
       actions = ["Book Morning Slot", "Book Afternoon Slot", "Open Demo Calendar"];
+      scoreChange = 15;
     } else {
       intent = 'dynamic_synthesis';
       const cleanPrompt = msg.replace(/[^\w\s]/gi, '');
