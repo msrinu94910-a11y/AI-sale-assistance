@@ -92,7 +92,7 @@ export function ChatWindow({ onLeadAdded }) {
       {/* Main Chat Conversation Container */}
       <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
         
-        {/* Chat Header */}
+        {/* Simplified Clean Chat Header */}
         <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ffffff' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg, #0072ff 0%, #00c6ff 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(0, 114, 255, 0.35)' }}>
@@ -125,12 +125,8 @@ export function ChatWindow({ onLeadAdded }) {
               title="Configure LLM API Key (Optional)"
             >
               <Key size={14} />
-              <span>{localStorage.getItem('SALESBOT_OPENAI_API_KEY') ? 'API Key Active' : 'LLM Engine Settings'}</span>
+              <span>{localStorage.getItem('SALESBOT_OPENAI_API_KEY') ? 'API Key Active' : 'LLM Settings'}</span>
             </button>
-
-            <span className="badge badge-success">
-              <span className="pulse-dot"></span> Active Engine
-            </span>
           </div>
         </div>
 
