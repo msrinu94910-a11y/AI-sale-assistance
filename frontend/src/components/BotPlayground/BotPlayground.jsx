@@ -14,7 +14,8 @@ import {
   Tag,
   Building,
   Mail,
-  DollarSign
+  DollarSign,
+  ArrowLeft
 } from 'lucide-react';
 import { marked } from 'marked';
 import { apiService } from '../../services/api';
@@ -24,7 +25,7 @@ marked.setOptions({
   breaks: true,
 });
 
-export function BotPlayground({ onLeadOrMeetingUpdated }) {
+export function BotPlayground({ onLeadOrMeetingUpdated, onBack }) {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,55 +44,56 @@ export function BotPlayground({ onLeadOrMeetingUpdated }) {
       {
         id: 1,
         sender: 'assistant',
-        text: "Hello! I am your Sales Assistant Bot API. I can qualify inbound prospects, extract entities (name, email, budget), calculate BANT scores, and schedule product demos. What would you like to explore?",
-        intent: "greeting",
+        text: "👋 Welcome to the **SalesBot AI Assistant Console**!\n\nI am configured with automated **BANT Lead Scoring**, **Entity Extraction**, and **1-Click Demo Booking**.\n\nTry sending a message like: *\"My name is Alex from Acme Corp, our budget is $50k and we want a demo tomorrow afternoon.\"*",
+        intent: "welcome",
         suggested_actions: ["Explain BANT Scoring", "View Pricing Plans", "Schedule Demo", "Qualify Inbound Lead"],
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     ]);
   }, []);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
   const loadStatus = async () => {
     try {
-      const data = await apiService.getBotStatus();
-      setBotStatus(data);
+      const statusData = await apiService.getBotStatus();
+      setBotStatus(statusData);
     } catch (e) {
-      console.warn('Bot status offline', e);
+      console.warn('Bot status error:', e);
     }
   };
 
-  const handleSend = async (textToSend = inputMessage) => {
-    if (!textToSend.trim() || loading) return;
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
-    const userText = textToSend.trim();
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, loading]);
+
+  const handleSend = async (textToSend = null) => {
+    const text = typeof textToSend === 'string' ? textToSend : inputMessage;
+    if (!text.trim() || loading) return;
+
     const userMsg = {
       id: Date.now(),
       sender: 'user',
-      text: userText,
+      text: text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
     setMessages((prev) => [...prev, userMsg]);
-    setInputMessage('');
+    if (typeof textToSend !== 'string') setInputMessage('');
     setLoading(true);
 
     try {
-      const data = await apiService.sendBotChat(userText, sessionId);
-      setLastRawResponse(data);
-      if (data.session_id) {
-        setSessionId(data.session_id);
-      }
+      const resp = await apiService.sendBotChat(text, sessionId);
+      setLastRawResponse(resp);
 
-      // Update extracted entities summary
-      if (data.extracted_entities) {
+      // Merge extracted entities into active summary display
+      if (resp.extracted_entities) {
         setExtractedSummary((prev) => ({
           ...prev,
           ...Object.fromEntries(
-            Object.entries(data.extracted_entities).filter(([_, v]) => v != null)
+            Object.entries(resp.extracted_entities).filter(([_, v]) => v !== null && v !== undefined && v !== '')
           )
         }));
       }
@@ -99,29 +101,30 @@ export function BotPlayground({ onLeadOrMeetingUpdated }) {
       const botMsg = {
         id: Date.now() + 1,
         sender: 'assistant',
-        text: data.reply,
-        intent: data.intent,
-        suggested_actions: data.suggested_actions || [],
-        extracted: data.extracted_entities,
-        lead: data.lead,
+        text: resp.reply || "Message received.",
+        intent: resp.intent,
+        suggested_actions: resp.suggested_actions || [],
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
       setMessages((prev) => [...prev, botMsg]);
 
-      // If lead or meeting was created/updated, notify parent app
-      if (data.lead || data.intent === 'demo_booked') {
+      // If demo booked or lead score changed, trigger callback to refresh main app state
+      if (resp.intent === 'demo_booked' || resp.score_change) {
         if (onLeadOrMeetingUpdated) onLeadOrMeetingUpdated();
       }
     } catch (err) {
-      const errorMsg = {
-        id: Date.now() + 1,
-        sender: 'assistant',
-        text: `⚠️ API Error: ${err.message || 'Unable to connect to /api/v1/bot/chat'}`,
-        intent: 'error',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages((prev) => [...prev, errorMsg]);
+      console.error("Bot chat error:", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: 'assistant',
+          text: "⚠️ System offline or network error. Please try again.",
+          intent: 'error',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ]);
     } finally {
       setLoading(false);
     }
@@ -144,55 +147,74 @@ export function BotPlayground({ onLeadOrMeetingUpdated }) {
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       
       {/* Top Header Card */}
       <div className="glass-panel" style={{ 
-        padding: '24px', 
+        padding: '16px 20px', 
         background: 'linear-gradient(135deg, #0c192c 0%, #152a4a 100%)',
         color: '#ffffff',
         border: '1px solid rgba(0, 114, 255, 0.3)',
-        boxShadow: '0 10px 30px rgba(12, 25, 44, 0.4)'
+        boxShadow: '0 8px 24px rgba(12, 25, 44, 0.35)'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-              <span className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Zap size={13} /> REST API: /api/v1/bot/chat
-              </span>
-              <span style={{ fontSize: '0.78rem', color: '#9fb3c8' }}>
-                Session: <code style={{ color: '#38bdf8' }}>{sessionId}</code>
-              </span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            {onBack && (
+              <button
+                className="btn btn-secondary btn-icon"
+                onClick={onBack}
+                style={{
+                  padding: '7px 12px',
+                  fontSize: '0.82rem',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255, 255, 255, 0.3)'
+                }}
+                title="Back to Dashboard"
+              >
+                <ArrowLeft size={15} />
+                <span>Back</span>
+              </button>
+            )}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                <span className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', padding: '2px 8px' }}>
+                  <Zap size={11} /> REST API: /api/v1/bot/chat
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#9fb3c8' }}>
+                  Session: <code style={{ color: '#38bdf8' }}>{sessionId}</code>
+                </span>
+              </div>
+              <h1 style={{ fontSize: '1.35rem', color: '#ffffff', marginBottom: '2px', fontWeight: '800' }}>
+                Sales Assistant Bot API Console
+              </h1>
+              <p style={{ color: '#bcccdc', fontSize: '0.82rem' }}>
+                Test multi-turn sales dialogue, automated BANT qualification, entity extraction, and live calendar booking.
+              </p>
             </div>
-            <h1 style={{ fontSize: '1.6rem', color: '#ffffff', marginBottom: '4px' }}>
-              Sales Assistant Bot API Console
-            </h1>
-            <p style={{ color: '#bcccdc', fontSize: '0.88rem' }}>
-              Test multi-turn sales dialogue, automated BANT qualification, entity extraction, and live calendar booking.
-            </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <button 
               className="btn btn-secondary" 
               onClick={handleResetSession}
-              style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: '0.82rem', padding: '8px 14px' }}
+              style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: '0.78rem', padding: '6px 12px' }}
             >
-              <RefreshCw size={14} /> Reset Session
+              <RefreshCw size={13} /> Reset Session
             </button>
             <button 
               className="btn btn-primary"
               onClick={() => setShowJsonInspector(!showJsonInspector)}
-              style={{ fontSize: '0.82rem', padding: '8px 14px' }}
+              style={{ fontSize: '0.78rem', padding: '6px 12px' }}
             >
-              <Code size={14} /> {showJsonInspector ? 'Hide JSON' : 'Inspect JSON'}
+              <Code size={13} /> {showJsonInspector ? 'Hide JSON' : 'Inspect JSON'}
             </button>
             <a 
               href="http://localhost:8000/docs" 
               target="_blank" 
               rel="noreferrer"
               className="btn btn-gold"
-              style={{ fontSize: '0.82rem', padding: '8px 14px', textDecoration: 'none' }}
+              style={{ fontSize: '0.78rem', padding: '6px 12px', textDecoration: 'none' }}
             >
               Swagger Docs ↗
             </a>
@@ -201,10 +223,10 @@ export function BotPlayground({ onLeadOrMeetingUpdated }) {
 
         {/* Providers pill row */}
         {botStatus && (
-          <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>
-            <span style={{ fontSize: '0.75rem', color: '#9fb3c8', fontWeight: '700' }}>Active Providers:</span>
+          <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px' }}>
+            <span style={{ fontSize: '0.72rem', color: '#9fb3c8', fontWeight: '700' }}>Active Providers:</span>
             {botStatus.active_providers?.map((p, i) => (
-              <span key={i} style={{ fontSize: '0.72rem', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+              <span key={i} style={{ fontSize: '0.7rem', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
                 ✓ {p}
               </span>
             ))}
@@ -213,13 +235,15 @@ export function BotPlayground({ onLeadOrMeetingUpdated }) {
       </div>
 
       {/* Main Content Area */}
-      <div style={{ display: 'grid', gridTemplateColumns: showJsonInspector ? '1fr 1fr' : '2fr 1fr', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: showJsonInspector ? '1fr 1fr' : '2fr 1fr', gap: '16px' }}>
         
         {/* Left: Chat Window */}
         <div className="glass-panel" style={{ 
           display: 'flex', 
           flexDirection: 'column', 
-          height: '620px', 
+          height: 'calc(100vh - 220px)', 
+          minHeight: '460px',
+          maxHeight: '650px',
           background: '#ffffff',
           overflow: 'hidden' 
         }}>
@@ -364,7 +388,7 @@ export function BotPlayground({ onLeadOrMeetingUpdated }) {
 
         {/* Right: Real-time Entity Inspector or JSON Raw Inspector */}
         {showJsonInspector ? (
-          <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', height: '620px', overflow: 'hidden' }}>
+          <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 220px)', minHeight: '460px', maxHeight: '650px', overflow: 'hidden' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <h3 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Code size={16} color="#0072ff" /> Raw API Response Payload

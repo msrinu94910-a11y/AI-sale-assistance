@@ -1,10 +1,10 @@
 from typing import List
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.meeting import Meeting
-from app.schemas.meeting import MeetingCreate, MeetingResponse
+from app.schemas.meeting import MeetingCreate, MeetingUpdate, MeetingResponse
 
 router = APIRouter()
 
@@ -57,3 +57,30 @@ def create_meeting(meeting_in: MeetingCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(meeting)
     return meeting
+
+@router.put("/{meeting_id}", response_model=MeetingResponse)
+def update_meeting(meeting_id: int, meeting_in: MeetingUpdate, db: Session = Depends(get_db)):
+    meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
+    if not meeting:
+        mock = next((m for m in DEFAULT_MEETINGS if m["id"] == meeting_id), None)
+        if mock:
+            mock.update({k: v for k, v in meeting_in.dict(exclude_unset=True).items() if v is not None})
+            return mock
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    
+    update_data = meeting_in.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(meeting, field, value)
+    
+    db.commit()
+    db.refresh(meeting)
+    return meeting
+
+@router.delete("/{meeting_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_meeting(meeting_id: int, db: Session = Depends(get_db)):
+    meeting = db.query(Meeting).filter(Meeting.id == meeting_id).first()
+    if meeting:
+        db.delete(meeting)
+        db.commit()
+    return None
+

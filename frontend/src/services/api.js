@@ -216,6 +216,46 @@ export const apiService = {
     return newLeadObj;
   },
 
+  async updateLead(leadId, leadData) {
+    try {
+      const res = await fetch(`${API_BASE}/leads/${leadId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(leadData)
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('API update unavailable, updating client-side', err);
+    }
+    const score = Math.round(
+      (leadData.budget || 50) * 0.25 +
+      (leadData.need || 50) * 0.30 +
+      (leadData.authority || 50) * 0.20 +
+      (leadData.timeline || 50) * 0.25
+    );
+    const category = score >= 71 ? 'Hot' : score >= 41 ? 'Warm' : 'Cold';
+    return {
+      id: leadId,
+      ...leadData,
+      score,
+      category
+    };
+  },
+
+  async deleteLead(leadId) {
+    try {
+      const res = await fetch(`${API_BASE}/leads/${leadId}`, {
+        method: 'DELETE'
+      });
+      return res.ok;
+    } catch (err) {
+      console.warn('API delete unavailable, deleting client-side', err);
+      return true;
+    }
+  },
+
   // Analytics API
   async getAnalyticsSummary() {
     try {
@@ -291,6 +331,38 @@ export const apiService = {
       };
     }
   },
+
+  async updateMeeting(meetingId, meetingData) {
+    try {
+      const res = await fetch(`${API_BASE}/meetings/${meetingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(meetingData)
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('Meeting update API unavailable, updating client-side', err);
+    }
+    return {
+      id: meetingId,
+      ...meetingData
+    };
+  },
+
+  async deleteMeeting(meetingId) {
+    try {
+      const res = await fetch(`${API_BASE}/meetings/${meetingId}`, {
+        method: 'DELETE'
+      });
+      return res.ok;
+    } catch (err) {
+      console.warn('Meeting delete API unavailable, deleting client-side', err);
+      return true;
+    }
+  },
+
 
   // SalesBot API Endpoints
   async getBotStatus() {

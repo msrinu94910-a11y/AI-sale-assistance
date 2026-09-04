@@ -8,7 +8,7 @@ import { AnalyticsView } from './components/Analytics/AnalyticsView';
 import { LeadModal } from './components/Forms/LeadModal';
 import { MeetingModal } from './components/Forms/MeetingModal';
 import { apiService } from './services/api';
-import { Calendar, Clock, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, Pencil, Trash2, ArrowLeft } from 'lucide-react';
 
 export function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -19,6 +19,9 @@ export function App() {
   const [selectedLead, setSelectedLead] = useState(null);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
+
+  const [editingLead, setEditingLead] = useState(null);
+  const [editingMeeting, setEditingMeeting] = useState(null);
 
   useEffect(() => {
     loadInitialData();
@@ -39,51 +42,108 @@ export function App() {
     }
   };
 
-  const handleAddLead = async (newLeadData) => {
+  const handleOpenCreateLead = () => {
+    setEditingLead(null);
+    setIsLeadModalOpen(true);
+  };
+
+  const handleOpenEditLead = (lead) => {
+    setEditingLead(lead);
+    setIsLeadModalOpen(true);
+  };
+
+  const handleSaveLead = async (leadData) => {
     try {
-      const created = await apiService.createLead(newLeadData);
-      
-      // Update leads list state immediately
-      setLeads((prev) => {
-        const filtered = prev.filter(l => l.id !== created.id);
-        return [created, ...filtered];
-      });
+      if (editingLead) {
+        // Edit existing lead
+        const updated = await apiService.updateLead(editingLead.id, leadData);
+        setLeads((prev) => prev.map((l) => (l.id === editingLead.id ? { ...l, ...updated } : l)));
+        if (selectedLead?.id === editingLead.id) {
+          setSelectedLead((prev) => ({ ...prev, ...updated }));
+        }
+        setEditingLead(null);
+      } else {
+        // Create new lead
+        const created = await apiService.createLead(leadData);
+        setLeads((prev) => {
+          const filtered = prev.filter((l) => l.id !== created.id);
+          return [created, ...filtered];
+        });
 
-      // Update analytics summary metrics dynamically
-      setSummary((prev) => {
-        if (!prev) return prev;
-        const cat = created.category || 'Warm';
-        return {
-          ...prev,
-          total_leads: (prev.total_leads || 0) + 1,
-          hot_leads: cat === 'Hot' ? (prev.hot_leads || 0) + 1 : (prev.hot_leads || 0),
-          warm_leads: cat === 'Warm' ? (prev.warm_leads || 0) + 1 : (prev.warm_leads || 0),
-          cold_leads: cat === 'Cold' ? (prev.cold_leads || 0) + 1 : (prev.cold_leads || 0),
-          recent_activities: [
-            {
-              time: "Just now",
-              action: "New Lead Added",
-              detail: `${created.name} (${created.company || 'Enterprise'}) qualified as ${created.category} Lead (Score: ${created.score})`
-            },
-            ...(prev.recent_activities || [])
-          ]
-        };
-      });
+        // Update analytics summary metrics dynamically
+        setSummary((prev) => {
+          if (!prev) return prev;
+          const cat = created.category || 'Warm';
+          return {
+            ...prev,
+            total_leads: (prev.total_leads || 0) + 1,
+            hot_leads: cat === 'Hot' ? (prev.hot_leads || 0) + 1 : (prev.hot_leads || 0),
+            warm_leads: cat === 'Warm' ? (prev.warm_leads || 0) + 1 : (prev.warm_leads || 0),
+            cold_leads: cat === 'Cold' ? (prev.cold_leads || 0) + 1 : (prev.cold_leads || 0),
+            recent_activities: [
+              {
+                time: "Just now",
+                action: "New Lead Added",
+                detail: `${created.name} (${created.company || 'Enterprise'}) qualified as ${created.category} Lead (Score: ${created.score})`
+              },
+              ...(prev.recent_activities || [])
+            ]
+          };
+        });
 
-      // Switch to Leads tab so the user sees their new lead immediately!
-      setActiveTab('leads');
+        setActiveTab('leads');
+      }
     } catch (err) {
-      console.error('Error creating new lead:', err);
+      console.error('Error saving lead:', err);
     }
   };
 
-  const handleScheduleMeeting = async (meetingData) => {
+  const handleDeleteLead = async (leadId) => {
     try {
-      const created = await apiService.createMeeting(meetingData);
-      setMeetings((prev) => [created, ...prev]);
-      setActiveTab('meetings');
+      await apiService.deleteLead(leadId);
+      setLeads((prev) => prev.filter((l) => l.id !== leadId));
+      if (selectedLead?.id === leadId) {
+        setSelectedLead(null);
+      }
     } catch (err) {
-      console.error('Error scheduling meeting:', err);
+      console.error('Error deleting lead:', err);
+    }
+  };
+
+  const handleOpenCreateMeeting = () => {
+    setEditingMeeting(null);
+    setIsMeetingModalOpen(true);
+  };
+
+  const handleOpenEditMeeting = (meeting) => {
+    setEditingMeeting(meeting);
+    setIsMeetingModalOpen(true);
+  };
+
+  const handleSaveMeeting = async (meetingData) => {
+    try {
+      if (editingMeeting) {
+        // Edit existing meeting
+        const updated = await apiService.updateMeeting(editingMeeting.id, meetingData);
+        setMeetings((prev) => prev.map((m) => (m.id === editingMeeting.id ? { ...m, ...updated } : m)));
+        setEditingMeeting(null);
+      } else {
+        // Schedule new meeting
+        const created = await apiService.createMeeting(meetingData);
+        setMeetings((prev) => [created, ...prev]);
+        setActiveTab('meetings');
+      }
+    } catch (err) {
+      console.error('Error saving meeting:', err);
+    }
+  };
+
+  const handleDeleteMeeting = async (meetingId) => {
+    try {
+      await apiService.deleteMeeting(meetingId);
+      setMeetings((prev) => prev.filter((m) => m.id !== meetingId));
+    } catch (err) {
+      console.error('Error deleting meeting:', err);
     }
   };
 
@@ -94,8 +154,8 @@ export function App() {
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onOpenLeadModal={() => setIsLeadModalOpen(true)}
-        onOpenMeetingModal={() => setIsMeetingModalOpen(true)}
+        onOpenLeadModal={handleOpenCreateLead}
+        onOpenMeetingModal={handleOpenCreateMeeting}
       />
 
       {/* Main Container */}
@@ -106,14 +166,16 @@ export function App() {
             summary={summary}
             leads={leads}
             setActiveTab={setActiveTab}
-            onOpenLeadModal={() => setIsLeadModalOpen(true)}
-            onOpenMeetingModal={() => setIsMeetingModalOpen(true)}
+            onOpenLeadModal={handleOpenCreateLead}
+            onOpenMeetingModal={handleOpenCreateMeeting}
+            onSelectLead={(lead) => setSelectedLead(lead)}
           />
         )}
 
         {activeTab === 'bot' && (
           <BotPlayground
             onLeadOrMeetingUpdated={loadInitialData}
+            onBack={() => setActiveTab('dashboard')}
           />
         )}
 
@@ -121,24 +183,39 @@ export function App() {
           <LeadList
             leads={leads}
             onSelectLead={(lead) => setSelectedLead(lead)}
-            onOpenLeadModal={() => setIsLeadModalOpen(true)}
+            onOpenLeadModal={handleOpenCreateLead}
+            onEditLead={handleOpenEditLead}
+            onDeleteLead={handleDeleteLead}
+            onBack={() => setActiveTab('dashboard')}
           />
         )}
 
         {activeTab === 'analytics' && (
           <AnalyticsView
             summary={summary}
+            onBack={() => setActiveTab('dashboard')}
           />
         )}
 
         {activeTab === 'meetings' && (
           <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div className="glass-panel" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>Scheduled Meetings & Product Demos</h2>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Automated sales calendar integration</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <button
+                  className="btn btn-secondary btn-icon"
+                  onClick={() => setActiveTab('dashboard')}
+                  style={{ padding: '8px 14px', fontSize: '0.85rem' }}
+                  title="Back to Dashboard"
+                >
+                  <ArrowLeft size={16} />
+                  <span>Back</span>
+                </button>
+                <div>
+                  <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>Scheduled Meetings & Product Demos</h2>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Automated sales calendar integration</p>
+                </div>
               </div>
-              <button className="btn btn-gold" onClick={() => setIsMeetingModalOpen(true)}>
+              <button className="btn btn-gold" onClick={handleOpenCreateMeeting}>
                 <Calendar size={16} /> Book New Demo
               </button>
             </div>
@@ -171,6 +248,29 @@ export function App() {
                       Note: {m.notes}
                     </p>
                   )}
+
+                  {/* Card Actions: Edit & Delete */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid var(--border-color)' }}>
+                    <button
+                      className="btn btn-secondary btn-icon"
+                      onClick={() => handleOpenEditMeeting(m)}
+                      title="Edit Meeting"
+                    >
+                      <Pencil size={13} /> Edit
+                    </button>
+                    <button
+                      className="btn btn-danger btn-icon"
+                      onClick={() => {
+                        if (window.confirm(`Are you sure you want to delete meeting "${m.title}"?`)) {
+                          handleDeleteMeeting(m.id);
+                        }
+                      }}
+                      title="Delete Meeting"
+                    >
+                      <Trash2 size={13} /> Delete
+                    </button>
+                  </div>
+
                 </div>
               ))}
             </div>
@@ -186,24 +286,34 @@ export function App() {
           onClose={() => setSelectedLead(null)}
           onScheduleDemo={(lead) => {
             setSelectedLead(null);
-            setIsMeetingModalOpen(true);
+            handleOpenCreateMeeting();
           }}
+          onEditLead={handleOpenEditLead}
+          onDeleteLead={handleDeleteLead}
         />
       )}
 
-      {/* Add Lead Modal */}
+      {/* Add / Edit Lead Modal */}
       <LeadModal
         isOpen={isLeadModalOpen}
-        onClose={() => setIsLeadModalOpen(false)}
-        onSubmit={handleAddLead}
+        onClose={() => {
+          setIsLeadModalOpen(false);
+          setEditingLead(null);
+        }}
+        onSubmit={handleSaveLead}
+        leadToEdit={editingLead}
       />
 
-      {/* Schedule Meeting Modal */}
+      {/* Schedule / Edit Meeting Modal */}
       <MeetingModal
         isOpen={isMeetingModalOpen}
-        onClose={() => setIsMeetingModalOpen(false)}
-        onSubmit={handleScheduleMeeting}
+        onClose={() => {
+          setIsMeetingModalOpen(false);
+          setEditingMeeting(null);
+        }}
+        onSubmit={handleSaveMeeting}
         selectedLead={selectedLead}
+        meetingToEdit={editingMeeting}
       />
 
     </div>

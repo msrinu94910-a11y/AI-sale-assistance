@@ -11,7 +11,9 @@ import {
   Sparkles 
 } from 'lucide-react';
 
-export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, onOpenMeetingModal }) {
+export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, onOpenMeetingModal, onSelectLead }) {
+  const sortedLeads = [...(leads || [])].sort((a, b) => (b.score || 0) - (a.score || 0));
+
   const stats = [
     {
       title: 'Total Active Leads',
@@ -139,17 +141,22 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {leads?.slice(0, 4).map((lead) => (
-              <div key={lead.id} style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '14px 18px',
-                background: '#f8fafc',
-                borderRadius: '12px',
-                border: '1px solid #e1e8f0',
-                transition: 'all 0.2s ease'
-              }}>
+            {sortedLeads.slice(0, 5).map((lead) => (
+              <div 
+                key={lead.id} 
+                onClick={() => onSelectLead && onSelectLead(lead)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 18px',
+                  background: '#f8fafc',
+                  borderRadius: '12px',
+                  border: '1px solid #e1e8f0',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                   <div style={{
                     width: '44px',
@@ -172,12 +179,16 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <span className={`badge badge-${lead.category.toLowerCase()}`}>
-                    {lead.category} ({lead.score} pts)
-                  </span>
-                  <span style={{ fontSize: '0.82rem', color: '#0072ff', background: '#e6f0ff', padding: '4px 12px', borderRadius: '8px', fontWeight: '700' }}>
-                    {lead.status}
+                <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                  <span className={`badge badge-${lead.category.toLowerCase()}`} style={{ 
+                    padding: '7px 18px', 
+                    fontSize: '0.82rem', 
+                    minWidth: '210px', 
+                    justifyContent: 'center', 
+                    textAlign: 'center',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
+                  }}>
+                    {lead.category} ({lead.score} PTS) • {lead.status}
                   </span>
                 </div>
               </div>

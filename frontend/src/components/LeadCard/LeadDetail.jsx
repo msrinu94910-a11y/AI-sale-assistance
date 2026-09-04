@@ -1,7 +1,7 @@
 import React from 'react';
-import { X, Flame, Building, Mail, Phone, Calendar } from 'lucide-react';
+import { X, Flame, Building, Mail, Phone, Calendar, Pencil, Trash2, ArrowLeft } from 'lucide-react';
 
-export function LeadDetail({ lead, onClose, onScheduleDemo }) {
+export function LeadDetail({ lead, onClose, onScheduleDemo, onEditLead, onDeleteLead }) {
   if (!lead) return null;
 
   return (
@@ -32,6 +32,14 @@ export function LeadDetail({ lead, onClose, onScheduleDemo }) {
         
         {/* Drawer Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button
+            className="btn btn-secondary btn-icon"
+            onClick={onClose}
+            style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+            title="Back to Leads List"
+          >
+            <ArrowLeft size={14} /> Back
+          </button>
           <span className={`badge badge-${lead.category.toLowerCase()}`}>
             <Flame size={14} /> {lead.category} Lead ({lead.score} / 100)
           </span>
@@ -102,7 +110,33 @@ export function LeadDetail({ lead, onClose, onScheduleDemo }) {
             <Calendar size={18} />
             <span>Schedule Demo for {lead.name}</span>
           </button>
-          <button className="btn btn-secondary" onClick={onClose}>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                onClose();
+                if (onEditLead) onEditLead(lead);
+              }}
+            >
+              <Pencil size={16} />
+              <span>Edit Lead</span>
+            </button>
+            <button
+              className="btn btn-danger"
+              onClick={() => {
+                if (window.confirm(`Are you sure you want to delete lead "${lead.name}"?`)) {
+                  onClose();
+                  if (onDeleteLead) onDeleteLead(lead.id);
+                }
+              }}
+            >
+              <Trash2 size={16} />
+              <span>Delete Lead</span>
+            </button>
+          </div>
+
+          <button className="btn btn-secondary" onClick={onClose} style={{ marginTop: '4px' }}>
             <span>Close Details</span>
           </button>
         </div>

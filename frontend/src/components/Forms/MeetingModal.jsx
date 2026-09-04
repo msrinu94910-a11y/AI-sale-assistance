@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Calendar } from 'lucide-react';
 
-export function MeetingModal({ isOpen, onClose, onSubmit, selectedLead }) {
+export function MeetingModal({ isOpen, onClose, onSubmit, selectedLead, meetingToEdit = null }) {
   const [formData, setFormData] = useState({
     lead_name: selectedLead ? `${selectedLead.name} (${selectedLead.company || 'Enterprise'})` : '',
     title: 'Product Demo & Architecture Review',
@@ -9,6 +9,36 @@ export function MeetingModal({ isOpen, onClose, onSubmit, selectedLead }) {
     duration_minutes: 30,
     notes: 'Covering AI lead scoring integration and custom workflow automation.'
   });
+
+  useEffect(() => {
+    if (meetingToEdit) {
+      let formattedDate = new Date(Date.now() + 86400000).toISOString().slice(0, 16);
+      if (meetingToEdit.meeting_date) {
+        try {
+          const d = new Date(meetingToEdit.meeting_date);
+          const tzOffset = d.getTimezoneOffset() * 60000;
+          formattedDate = new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+        } catch (e) {
+          console.warn('Date parsing error', e);
+        }
+      }
+      setFormData({
+        lead_name: meetingToEdit.lead_name || '',
+        title: meetingToEdit.title || '',
+        meeting_date: formattedDate,
+        duration_minutes: meetingToEdit.duration_minutes || 30,
+        notes: meetingToEdit.notes || ''
+      });
+    } else {
+      setFormData({
+        lead_name: selectedLead ? `${selectedLead.name} (${selectedLead.company || 'Enterprise'})` : '',
+        title: 'Product Demo & Architecture Review',
+        meeting_date: new Date(Date.now() + 86400000).toISOString().slice(0, 16),
+        duration_minutes: 30,
+        notes: 'Covering AI lead scoring integration and custom workflow automation.'
+      });
+    }
+  }, [isOpen, meetingToEdit, selectedLead]);
 
   if (!isOpen) return null;
 
@@ -41,7 +71,9 @@ export function MeetingModal({ isOpen, onClose, onSubmit, selectedLead }) {
               <Calendar size={20} color="#fff" />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>Schedule Demo & Meeting</h3>
+              <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>
+                {meetingToEdit ? 'Edit Meeting & Product Demo' : 'Schedule Demo & Meeting'}
+              </h3>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>AI-Assisted Calendar Booking</span>
             </div>
           </div>
@@ -117,7 +149,7 @@ export function MeetingModal({ isOpen, onClose, onSubmit, selectedLead }) {
               Cancel
             </button>
             <button type="submit" className="btn btn-primary">
-              <Calendar size={16} /> Confirm Booking
+              <Calendar size={16} /> {meetingToEdit ? 'Update Meeting' : 'Confirm Booking'}
             </button>
           </div>
 

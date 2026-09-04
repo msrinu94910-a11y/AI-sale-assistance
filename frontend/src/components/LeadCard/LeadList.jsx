@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Search, Plus, Flame, Building, Mail, Phone, UserPlus } from 'lucide-react';
+import { Search, Plus, Flame, Building, Mail, Phone, UserPlus, Pencil, Trash2, ArrowLeft } from 'lucide-react';
 
-export function LeadList({ leads, onSelectLead, onOpenLeadModal }) {
+export function LeadList({ leads, onSelectLead, onOpenLeadModal, onEditLead, onDeleteLead, onBack }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
 
@@ -22,11 +22,24 @@ export function LeadList({ leads, onSelectLead, onOpenLeadModal }) {
       
       {/* Header Controls Bar */}
       <div className="glass-panel" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>Qualified Lead Directory & Pipeline</h2>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-            Track, filter, and manage all qualified prospect accounts and sales pipeline status.
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          {onBack && (
+            <button
+              className="btn btn-secondary btn-icon"
+              onClick={onBack}
+              style={{ padding: '8px 14px', fontSize: '0.85rem' }}
+              title="Back to Dashboard"
+            >
+              <ArrowLeft size={16} />
+              <span>Back</span>
+            </button>
+          )}
+          <div>
+            <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>Qualified Lead Directory & Pipeline</h2>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+              Track, filter, and manage all qualified prospect accounts and sales pipeline status.
+            </p>
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -150,19 +163,45 @@ export function LeadList({ leads, onSelectLead, onOpenLeadModal }) {
               </div>
             </div>
 
-            {/* Bottom Row: Pipeline Status */}
+            {/* Bottom Row: Pipeline Status & Edit/Delete Actions */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
-              <span style={{ color: 'var(--text-muted)' }}>Status Pipeline:</span>
               <span style={{
                 color: '#0072ff',
                 background: '#e6f0ff',
-                padding: '4px 12px',
+                padding: '4px 10px',
                 borderRadius: '8px',
                 fontWeight: '700',
                 border: '1px solid #bfdbfe'
               }}>
                 {lead.status}
               </span>
+
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  className="btn btn-secondary btn-icon"
+                  style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onEditLead) onEditLead(lead);
+                  }}
+                  title="Edit Lead"
+                >
+                  <Pencil size={13} /> Edit
+                </button>
+                <button
+                  className="btn btn-danger btn-icon"
+                  style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm(`Are you sure you want to delete lead "${lead.name}"?`)) {
+                      if (onDeleteLead) onDeleteLead(lead.id);
+                    }
+                  }}
+                  title="Delete Lead"
+                >
+                  <Trash2 size={13} /> Delete
+                </button>
+              </div>
             </div>
 
           </div>

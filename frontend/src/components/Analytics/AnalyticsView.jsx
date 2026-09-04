@@ -1,7 +1,7 @@
 import React from 'react';
-import { BarChart3, PieChart, Target } from 'lucide-react';
+import { BarChart3, PieChart, Target, ArrowLeft } from 'lucide-react';
 
-export function AnalyticsView({ summary }) {
+export function AnalyticsView({ summary, onBack }) {
   const dist = summary?.category_distribution || { Hot: 18, Warm: 16, Cold: 8 };
   const total = (dist.Hot || 0) + (dist.Warm || 0) + (dist.Cold || 0) || 1;
 
@@ -14,7 +14,18 @@ export function AnalyticsView({ summary }) {
       
       {/* Header Banner */}
       <div className="glass-panel" style={{ padding: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          {onBack && (
+            <button
+              className="btn btn-secondary btn-icon"
+              onClick={onBack}
+              style={{ padding: '8px 14px', fontSize: '0.85rem' }}
+              title="Back to Dashboard"
+            >
+              <ArrowLeft size={16} />
+              <span>Back</span>
+            </button>
+          )}
           <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <BarChart3 size={24} color="var(--accent-primary)" />
           </div>

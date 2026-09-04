@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Sparkles, User, Flame } from 'lucide-react';
 
-export function LeadModal({ isOpen, onClose, onSubmit }) {
+export function LeadModal({ isOpen, onClose, onSubmit, leadToEdit = null }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,6 +14,36 @@ export function LeadModal({ isOpen, onClose, onSubmit }) {
     timeline: 50,
     notes: ''
   });
+
+  useEffect(() => {
+    if (leadToEdit) {
+      setFormData({
+        name: leadToEdit.name || '',
+        email: leadToEdit.email || '',
+        phone: leadToEdit.phone || '',
+        company: leadToEdit.company || '',
+        status: leadToEdit.status || 'New',
+        budget: leadToEdit.budget ?? 50,
+        need: leadToEdit.need ?? 50,
+        authority: leadToEdit.authority ?? 50,
+        timeline: leadToEdit.timeline ?? 50,
+        notes: leadToEdit.notes || ''
+      });
+    } else {
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        company: '',
+        status: 'New',
+        budget: 50,
+        need: 50,
+        authority: 50,
+        timeline: 50,
+        notes: ''
+      });
+    }
+  }, [isOpen, leadToEdit]);
 
   if (!isOpen) return null;
 
@@ -76,7 +106,9 @@ export function LeadModal({ isOpen, onClose, onSubmit }) {
               <User size={22} color="#fff" />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', fontWeight: '800' }}>Add New Lead</h3>
+              <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', fontWeight: '800' }}>
+                {leadToEdit ? 'Edit Lead Details' : 'Add New Lead'}
+              </h3>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Automated BANT Qualification Scoring</span>
             </div>
           </div>
@@ -205,7 +237,7 @@ export function LeadModal({ isOpen, onClose, onSubmit }) {
               Cancel
             </button>
             <button type="submit" className="btn btn-gold" style={{ padding: '10px 24px', fontSize: '0.9rem' }}>
-              <Sparkles size={18} /> Save & Qualify Lead
+              <Sparkles size={18} /> {leadToEdit ? 'Update Lead Details' : 'Save & Qualify Lead'}
             </button>
           </div>
 
