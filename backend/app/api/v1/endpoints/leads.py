@@ -81,11 +81,24 @@ DEFAULT_LEADS = [
 def get_leads(category: Optional[str] = None, db: Session = Depends(get_db)):
     leads = db.query(Lead).all()
     if not leads:
-        # Fallback to seeded demo leads
-        filtered = DEFAULT_LEADS
-        if category:
-            filtered = [l for l in DEFAULT_LEADS if l["category"].lower() == category.lower()]
-        return filtered
+        for d in DEFAULT_LEADS:
+            l_obj = Lead(
+                name=d["name"],
+                email=d["email"],
+                phone=d["phone"],
+                company=d["company"],
+                status=d["status"],
+                budget=d["budget"],
+                need=d["need"],
+                authority=d["authority"],
+                timeline=d["timeline"],
+                score=d["score"],
+                category=d["category"],
+                notes=d["notes"]
+            )
+            db.add(l_obj)
+        db.commit()
+        leads = db.query(Lead).all()
 
     if category:
         leads = [l for l in leads if l.category.lower() == category.lower()]

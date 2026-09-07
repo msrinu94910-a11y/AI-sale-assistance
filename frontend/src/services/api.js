@@ -85,16 +85,192 @@ function synthesizeClientBotResponse(message, sessionId) {
     };
   }
 
+  if (['feature', 'capabilities', 'what can you do', 'function', 'tool', 'how it works', 'overview', 'service', 'platform'].some(p => msgLower.includes(p))) {
+    return {
+      reply: `🚀 **SalesBot AI Core Capabilities & Features**:\n\n1. **Automated BANT Lead Qualification**: Scores inbound prospects (0-100) on Budget, Need, Authority, and Timeline.\n2. **24/7 Conversational AI Widget**: Embeddable website chat bubble for instant visitor engagement.\n3. **1-Click Demo Meeting Booking**: Integrated sales calendar scheduling with zoom link generation.\n4. **AI Outreach Email Generator**: Drafts personalized sales follow-up sequences in seconds.\n5. **Real-time Pipeline Analytics**: Live conversion metrics, lead segmentation (Hot/Warm/Cold), and CRM database sync.`,
+      intent: 'features_inquiry',
+      session_id: session,
+      extracted_entities: extracted,
+      suggested_actions: ['⚡ Book Demo', '💰 View Pricing Plans', '📊 Test BANT Scoring'],
+      score_change: 15,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  if (['integrate', 'integration', 'api', 'embed', 'script', 'website', 'crm', 'salesforce', 'hubspot', 'webhook'].some(p => msgLower.includes(p))) {
+    return {
+      reply: `🔌 **Seamless Integration & Website Embedding**:\n\n• **1-Line Website Embed**: Copy \`<script src="http://localhost:5173/widget.js"></script>\` to deploy the chatbot on WordPress, Webflow, Shopify, or custom HTML.\n• **REST API V1**: Full FastAPI endpoints (\`/api/v1/bot/chat\`, \`/api/v1/leads\`, \`/api/v1/meetings\`) for custom CRM sync.\n• **Database Support**: Built-in SQLite/PostgreSQL synchronization with multi-turn session tracking.`,
+      intent: 'integration_inquiry',
+      session_id: session,
+      extracted_entities: extracted,
+      suggested_actions: ['Get Embed Code', 'Open Swagger Docs', 'Book Demo'],
+      score_change: 15,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  if (['contact', 'support', 'help', 'reach', 'sales team', 'human', 'representative', 'call'].some(p => msgLower.includes(p))) {
+    return {
+      reply: `📞 **Connect with Sales & Engineering Support**:\n\nOur Solution Engineering team is ready to assist you:\n• **Live Product Demo**: Book a 1-on-1 architecture call using our automated calendar.\n• **Direct Support**: Email support@salesbot.ai or request an immediate call back.\n• **Enterprise Consultation**: Custom SLA, dedicated Account Manager, and tailored workflow setup.`,
+      intent: 'contact_inquiry',
+      session_id: session,
+      extracted_entities: extracted,
+      suggested_actions: ['Book 1-on-1 Demo', 'Request Enterprise Quote'],
+      score_change: 10,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  if (['hi', 'hello', 'hey', 'greetings', 'good morning', 'good afternoon'].some(p => msgLower.includes(p)) && message.split(' ').length <= 4) {
+    return {
+      reply: `Hello! 👋 I am your **SalesBot AI Assistant**.\n\nI can answer product questions, calculate BANT lead scores, explain pricing, draft outreach emails, or book a live product demo for you.\n\nWhat would you like to explore?`,
+      intent: 'greeting',
+      session_id: session,
+      extracted_entities: extracted,
+      suggested_actions: ['⚡ Book Demo', '💰 View Pricing Plans', '📊 Calculate Lead Score'],
+      score_change: 5,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  const cleanText = message.replace(/[^\w\s]/gi, '');
+  const words = cleanText.split(' ').filter(w => w.length > 3 && !['what', 'how', 'this', 'that', 'there', 'have', 'with', 'from', 'your', 'they', 'about', 'could', 'would', 'tell', 'show', 'give'].includes(w.toLowerCase()));
+  const topic = words.slice(0, 3).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(', ') || 'Sales Automation';
+
   return {
-    reply: `SalesBot AI is ready to help! I can qualify inbound leads using our BANT scoring matrix, answer product and pricing questions, draft customized outreach emails, or book a live product demo.\n\nWhat would you like to explore next?`,
+    reply: `💡 **SalesBot AI Answer regarding '${topic}'**:\n\nSalesBot AI provides comprehensive sales automation designed to accelerate inbound lead conversions:\n\n• **Instant Discovery**: Visitors get instant answers to pricing, product specs, and architecture questions 24/7.\n• **Smart Scoring**: Every interaction is evaluated against your BANT criteria to qualify Hot Leads.\n• **Automated Booking**: High-intent prospects can select a demo slot directly in the chat, generating instant calendar invites.\n\nWould you like to test BANT lead scoring or book a live 1-on-1 demo call?`,
     intent: 'general_inquiry',
     session_id: session,
     extracted_entities: extracted,
-    suggested_actions: ['Explain BANT Scoring', 'View Pricing Plans', 'Schedule Demo', 'Qualify Inbound Lead'],
+    suggested_actions: ['⚡ Book Demo', '💰 View Pricing Plans', '📊 Calculate Lead Score'],
     score_change: 10,
     timestamp: new Date().toISOString()
   };
 }
+
+// Local Storage Keys & Fallback Helpers
+const LOCAL_LEADS_KEY = 'salesbot_persistent_leads';
+const LOCAL_MEETINGS_KEY = 'salesbot_persistent_meetings';
+
+function getLocalLeads() {
+  try {
+    const data = localStorage.getItem(LOCAL_LEADS_KEY);
+    return data ? JSON.parse(data) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveLocalLeads(leads) {
+  try {
+    localStorage.setItem(LOCAL_LEADS_KEY, JSON.stringify(leads));
+  } catch (e) {}
+}
+
+function getLocalMeetings() {
+  try {
+    const data = localStorage.getItem(LOCAL_MEETINGS_KEY);
+    return data ? JSON.parse(data) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveLocalMeetings(meetings) {
+  try {
+    localStorage.setItem(LOCAL_MEETINGS_KEY, JSON.stringify(meetings));
+  } catch (e) {}
+}
+
+const DEFAULT_INITIAL_LEADS = [
+  {
+    id: 1,
+    name: "Sarah Connor",
+    email: "sarah@cyberdyne.io",
+    phone: "+1 555-0192",
+    company: "Cyberdyne Systems",
+    status: "Qualified",
+    budget: 90,
+    need: 85,
+    authority: 80,
+    timeline: 95,
+    score: 88,
+    category: "Hot",
+    notes: "Looking for Enterprise AI CRM integration for 150+ reps.",
+    created_at: "2026-08-28T10:30:00Z"
+  },
+  {
+    id: 2,
+    name: "Marcus Vance",
+    email: "m.vance@apexdynamics.com",
+    phone: "+1 555-0144",
+    company: "Apex Dynamics",
+    status: "Contacted",
+    budget: 70,
+    need: 65,
+    authority: 60,
+    timeline: 50,
+    score: 62,
+    category: "Warm",
+    notes: "Interested in automated email follow-ups and lead scoring.",
+    created_at: "2026-08-29T14:15:00Z"
+  },
+  {
+    id: 3,
+    name: "Elena Rostova",
+    email: "elena@quantumscale.tech",
+    phone: "+1 555-0188",
+    company: "QuantumScale Tech",
+    status: "Proposal",
+    budget: 95,
+    need: 90,
+    authority: 85,
+    timeline: 90,
+    score: 91,
+    category: "Hot",
+    notes: "Contract in final legal review for Q4 deployment.",
+    created_at: "2026-08-30T09:00:00Z"
+  },
+  {
+    id: 4,
+    name: "David Miller",
+    email: "d.miller@horizoncloud.org",
+    phone: "+1 555-0122",
+    company: "Horizon Cloud",
+    status: "New",
+    budget: 30,
+    need: 40,
+    authority: 30,
+    timeline: 20,
+    score: 31,
+    category: "Cold",
+    notes: "Initial inquiry downloaded product whitepaper.",
+    created_at: "2026-09-01T16:45:00Z"
+  }
+];
+
+const DEFAULT_INITIAL_MEETINGS = [
+  {
+    id: 1,
+    lead_id: 1,
+    lead_name: "Sarah Connor (Cyberdyne Systems)",
+    title: "Enterprise CRM Architecture Review & Live Demo",
+    meeting_date: new Date(Date.now() + 86400000).toISOString(),
+    duration_minutes: 45,
+    status: "Scheduled",
+    notes: "Focus on security compliance, SSO, and 150-user seat pricing."
+  },
+  {
+    id: 2,
+    lead_id: 3,
+    lead_name: "Elena Rostova (QuantumScale Tech)",
+    title: "Contract Closing & Implementation Scope",
+    meeting_date: new Date(Date.now() + 172800000).toISOString(),
+    duration_minutes: 30,
+    status: "Scheduled",
+    notes: "Final procurement sign-off meeting."
+  }
+];
 
 export const apiService = {
   // Leads API
@@ -103,103 +279,27 @@ export const apiService = {
       const url = category ? `${API_BASE}/leads?category=${category}` : `${API_BASE}/leads`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch leads');
-      return await res.json();
+      const leads = await res.json();
+      if (leads && leads.length > 0) {
+        saveLocalLeads(leads);
+      }
+      return leads;
     } catch (err) {
-      console.warn('Backend API unavailable, serving client fallback data', err);
-      return [
-        {
-          id: 1,
-          name: "Sarah Connor",
-          email: "sarah@cyberdyne.io",
-          phone: "+1 555-0192",
-          company: "Cyberdyne Systems",
-          status: "Qualified",
-          budget: 90,
-          need: 85,
-          authority: 80,
-          timeline: 95,
-          score: 88,
-          category: "Hot",
-          notes: "Looking for Enterprise AI CRM integration for 150+ reps.",
-          created_at: "2026-08-28T10:30:00Z"
-        },
-        {
-          id: 2,
-          name: "Marcus Vance",
-          email: "m.vance@apexdynamics.com",
-          phone: "+1 555-0144",
-          company: "Apex Dynamics",
-          status: "Contacted",
-          budget: 70,
-          need: 65,
-          authority: 60,
-          timeline: 50,
-          score: 62,
-          category: "Warm",
-          notes: "Interested in automated email follow-ups and lead scoring.",
-          created_at: "2026-08-29T14:15:00Z"
-        },
-        {
-          id: 3,
-          name: "Elena Rostova",
-          email: "elena@quantumscale.tech",
-          phone: "+1 555-0188",
-          company: "QuantumScale Tech",
-          status: "Proposal",
-          budget: 95,
-          need: 90,
-          authority: 85,
-          timeline: 90,
-          score: 91,
-          category: "Hot",
-          notes: "Contract in final legal review for Q4 deployment.",
-          created_at: "2026-08-30T09:00:00Z"
-        },
-        {
-          id: 4,
-          name: "David Miller",
-          email: "d.miller@horizoncloud.org",
-          phone: "+1 555-0122",
-          company: "Horizon Cloud",
-          status: "New",
-          budget: 30,
-          need: 40,
-          authority: 30,
-          timeline: 20,
-          score: 31,
-          category: "Cold",
-          notes: "Initial inquiry downloaded product whitepaper.",
-          created_at: "2026-09-01T16:45:00Z"
-        }
-      ];
+      console.warn('Backend API unavailable, serving local persistent lead data', err);
+      let local = getLocalLeads();
+      if (!local || local.length === 0) {
+        local = DEFAULT_INITIAL_LEADS;
+        saveLocalLeads(local);
+      }
+      if (category) {
+        return local.filter(l => (l.category || '').toLowerCase() === category.toLowerCase());
+      }
+      return local;
     }
   },
 
   async createLead(leadData) {
-    const score = Math.round(
-      (leadData.budget || 50) * 0.25 +
-      (leadData.need || 50) * 0.30 +
-      (leadData.authority || 50) * 0.20 +
-      (leadData.timeline || 50) * 0.25
-    );
-    const category = score >= 71 ? 'Hot' : score >= 41 ? 'Warm' : 'Cold';
-    const newLeadObj = {
-      id: Date.now(),
-      name: leadData.name || 'New Lead',
-      email: leadData.email || 'lead@company.com',
-      phone: leadData.phone || '',
-      company: leadData.company || 'Enterprise',
-      status: leadData.status || 'New',
-      budget: leadData.budget || 50,
-      need: leadData.need || 50,
-      authority: leadData.authority || 50,
-      timeline: leadData.timeline || 50,
-      score,
-      category,
-      notes: leadData.notes || '',
-      created_at: new Date().toISOString()
-    };
-
+    let createdObj = null;
     try {
       const res = await fetch(`${API_BASE}/leads`, {
         method: 'POST',
@@ -207,16 +307,51 @@ export const apiService = {
         body: JSON.stringify(leadData)
       });
       if (res.ok) {
-        return await res.json();
+        createdObj = await res.json();
       }
     } catch (err) {
       console.warn('API connection offline, using client-side lead creation', err);
     }
 
-    return newLeadObj;
+    if (!createdObj) {
+      const score = Math.round(
+        (leadData.budget || 50) * 0.25 +
+        (leadData.need || 50) * 0.30 +
+        (leadData.authority || 50) * 0.20 +
+        (leadData.timeline || 50) * 0.25
+      );
+      const category = score >= 71 ? 'Hot' : score >= 41 ? 'Warm' : 'Cold';
+      createdObj = {
+        id: Date.now(),
+        name: leadData.name || 'New Lead',
+        email: leadData.email || 'lead@company.com',
+        phone: leadData.phone || '',
+        company: leadData.company || 'Enterprise',
+        status: leadData.status || 'New',
+        budget: leadData.budget || 50,
+        need: leadData.need || 50,
+        authority: leadData.authority || 50,
+        timeline: leadData.timeline || 50,
+        score,
+        category,
+        notes: leadData.notes || '',
+        created_at: new Date().toISOString()
+      };
+    }
+
+    let local = getLocalLeads();
+    if (!local || local.length === 0) {
+      local = DEFAULT_INITIAL_LEADS;
+    }
+    const filtered = local.filter(l => l.id !== createdObj.id);
+    const updatedList = [createdObj, ...filtered];
+    saveLocalLeads(updatedList);
+
+    return createdObj;
   },
 
   async updateLead(leadId, leadData) {
+    let updatedObj = null;
     try {
       const res = await fetch(`${API_BASE}/leads/${leadId}`, {
         method: 'PUT',
@@ -224,36 +359,50 @@ export const apiService = {
         body: JSON.stringify(leadData)
       });
       if (res.ok) {
-        return await res.json();
+        updatedObj = await res.json();
       }
     } catch (err) {
       console.warn('API update unavailable, updating client-side', err);
     }
-    const score = Math.round(
-      (leadData.budget || 50) * 0.25 +
-      (leadData.need || 50) * 0.30 +
-      (leadData.authority || 50) * 0.20 +
-      (leadData.timeline || 50) * 0.25
-    );
-    const category = score >= 71 ? 'Hot' : score >= 41 ? 'Warm' : 'Cold';
-    return {
-      id: leadId,
-      ...leadData,
-      score,
-      category
-    };
+
+    if (!updatedObj) {
+      const score = Math.round(
+        (leadData.budget || 50) * 0.25 +
+        (leadData.need || 50) * 0.30 +
+        (leadData.authority || 50) * 0.20 +
+        (leadData.timeline || 50) * 0.25
+      );
+      const category = score >= 71 ? 'Hot' : score >= 41 ? 'Warm' : 'Cold';
+      updatedObj = {
+        id: leadId,
+        ...leadData,
+        score,
+        category
+      };
+    }
+
+    let local = getLocalLeads();
+    if (local) {
+      local = local.map(l => l.id === leadId ? { ...l, ...updatedObj } : l);
+      saveLocalLeads(local);
+    }
+
+    return updatedObj;
   },
 
   async deleteLead(leadId) {
     try {
-      const res = await fetch(`${API_BASE}/leads/${leadId}`, {
+      await fetch(`${API_BASE}/leads/${leadId}`, {
         method: 'DELETE'
       });
-      return res.ok;
     } catch (err) {
       console.warn('API delete unavailable, deleting client-side', err);
-      return true;
     }
+    let local = getLocalLeads();
+    if (local) {
+      saveLocalLeads(local.filter(l => l.id !== leadId));
+    }
+    return true;
   },
 
   // Analytics API
@@ -263,20 +412,24 @@ export const apiService = {
       if (!res.ok) throw new Error('Failed to fetch analytics summary');
       return await res.json();
     } catch (err) {
+      const localLeads = getLocalLeads() || DEFAULT_INITIAL_LEADS;
+      const hotCount = localLeads.filter(l => l.category === 'Hot').length;
+      const warmCount = localLeads.filter(l => l.category === 'Warm').length;
+      const coldCount = localLeads.filter(l => l.category === 'Cold').length;
+
       return {
-        total_leads: 42,
-        hot_leads: 18,
-        warm_leads: 16,
-        cold_leads: 8,
+        total_leads: localLeads.length,
+        hot_leads: hotCount,
+        warm_leads: warmCount,
+        cold_leads: coldCount,
         conversion_rate: 42.8,
-        meetings_scheduled: 14,
+        meetings_scheduled: (getLocalMeetings() || DEFAULT_INITIAL_MEETINGS).length,
         pipeline_value: 145000.0,
-        category_distribution: { Hot: 18, Warm: 16, Cold: 8 },
+        category_distribution: { Hot: hotCount, Warm: warmCount, Cold: coldCount },
         recent_activities: [
-          { time: "10 mins ago", action: "Lead Qualified", detail: "Apex Dynamics marked as Hot Lead (Score: 88)" },
+          { time: "Just now", action: "Lead Qualified", detail: "Apex Dynamics marked as Hot Lead (Score: 88)" },
           { time: "1 hour ago", action: "Meeting Scheduled", detail: "Demo booked with Acme Corp for tomorrow at 2 PM" },
-          { time: "3 hours ago", action: "AI Chat Qualification", detail: "Automated BANT qualification completed for Nexus Labs" },
-          { time: "Yesterday", action: "Deal Closed", detail: "CloudScale Inc. signed Annual Enterprise Contract" }
+          { time: "3 hours ago", action: "AI Chat Qualification", detail: "Automated BANT qualification completed for Nexus Labs" }
         ]
       };
     }
@@ -287,52 +440,55 @@ export const apiService = {
     try {
       const res = await fetch(`${API_BASE}/meetings`);
       if (!res.ok) throw new Error('Failed to fetch meetings');
-      return await res.json();
+      const meetings = await res.json();
+      if (meetings && meetings.length > 0) {
+        saveLocalMeetings(meetings);
+      }
+      return meetings;
     } catch (err) {
-      return [
-        {
-          id: 1,
-          lead_id: 1,
-          lead_name: "Sarah Connor (Cyberdyne Systems)",
-          title: "Enterprise CRM Architecture Review & Live Demo",
-          meeting_date: new Date(Date.now() + 86400000).toISOString(),
-          duration_minutes: 45,
-          status: "Scheduled",
-          notes: "Focus on security compliance, SSO, and 150-user seat pricing."
-        },
-        {
-          id: 2,
-          lead_id: 3,
-          lead_name: "Elena Rostova (QuantumScale Tech)",
-          title: "Contract Closing & Implementation Scope",
-          meeting_date: new Date(Date.now() + 172800000).toISOString(),
-          duration_minutes: 30,
-          status: "Scheduled",
-          notes: "Final procurement sign-off meeting."
-        }
-      ];
+      let local = getLocalMeetings();
+      if (!local || local.length === 0) {
+        local = DEFAULT_INITIAL_MEETINGS;
+        saveLocalMeetings(local);
+      }
+      return local;
     }
   },
 
   async createMeeting(meetingData) {
+    let createdObj = null;
     try {
       const res = await fetch(`${API_BASE}/meetings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(meetingData)
       });
-      if (!res.ok) throw new Error('Failed to create meeting');
-      return await res.json();
+      if (res.ok) {
+        createdObj = await res.json();
+      }
     } catch (err) {
-      return {
+      console.warn('API connection offline, using client-side meeting creation', err);
+    }
+
+    if (!createdObj) {
+      createdObj = {
         id: Date.now(),
         ...meetingData,
         created_at: new Date().toISOString()
       };
     }
+
+    let local = getLocalMeetings();
+    if (!local || local.length === 0) {
+      local = DEFAULT_INITIAL_MEETINGS;
+    }
+    saveLocalMeetings([createdObj, ...local.filter(m => m.id !== createdObj.id)]);
+
+    return createdObj;
   },
 
   async updateMeeting(meetingId, meetingData) {
+    let updatedObj = null;
     try {
       const res = await fetch(`${API_BASE}/meetings/${meetingId}`, {
         method: 'PUT',
@@ -340,29 +496,38 @@ export const apiService = {
         body: JSON.stringify(meetingData)
       });
       if (res.ok) {
-        return await res.json();
+        updatedObj = await res.json();
       }
     } catch (err) {
       console.warn('Meeting update API unavailable, updating client-side', err);
     }
-    return {
-      id: meetingId,
-      ...meetingData
-    };
+
+    if (!updatedObj) {
+      updatedObj = { id: meetingId, ...meetingData };
+    }
+
+    let local = getLocalMeetings();
+    if (local) {
+      saveLocalMeetings(local.map(m => m.id === meetingId ? { ...m, ...updatedObj } : m));
+    }
+
+    return updatedObj;
   },
 
   async deleteMeeting(meetingId) {
     try {
-      const res = await fetch(`${API_BASE}/meetings/${meetingId}`, {
+      await fetch(`${API_BASE}/meetings/${meetingId}`, {
         method: 'DELETE'
       });
-      return res.ok;
     } catch (err) {
       console.warn('Meeting delete API unavailable, deleting client-side', err);
-      return true;
     }
+    let local = getLocalMeetings();
+    if (local) {
+      saveLocalMeetings(local.filter(m => m.id !== meetingId));
+    }
+    return true;
   },
-
 
   // SalesBot API Endpoints
   async getBotStatus() {
@@ -480,6 +645,108 @@ export const apiService = {
       meeting_date: new Date(Date.now() + 86400000).toISOString(),
       message: `Demo successfully scheduled for ${bookingData.lead_name}`
     };
+  },
+
+  // Authentication API
+  getCurrentUser() {
+    try {
+      const data = localStorage.getItem('salesbot_auth_user');
+      if (data) return JSON.parse(data);
+    } catch (e) {}
+    return null;
+  },
+
+  async login(email, password) {
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const userObj = {
+          email,
+          name: email.split('@')[0].replace('.', ' ').replace(/\b\w/g, c => c.toUpperCase()),
+          role: 'Sales Representative',
+          token: data.access_token,
+          isLoggedIn: true
+        };
+        localStorage.setItem('salesbot_auth_user', JSON.stringify(userObj));
+        localStorage.setItem('salesbot_auth_token', data.access_token);
+        return userObj;
+      }
+    } catch (err) {
+      console.warn('Backend Auth API offline, using smart local fallback authentication', err);
+    }
+
+    const mockProfiles = {
+      'executive@company.com': { name: 'Alex Morgan', role: 'Senior Sales Lead' },
+      'admin@salesbot.ai': { name: 'Sarah Connor', role: 'Sales Director & Admin' },
+      'engineer@salesbot.ai': { name: 'David Chen', role: 'Solutions Engineer' }
+    };
+
+    const matched = mockProfiles[email.toLowerCase()];
+    const userObj = {
+      id: Date.now(),
+      name: matched ? matched.name : (email ? email.split('@')[0].replace('.', ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Sales Rep'),
+      email: email || 'executive@company.com',
+      role: matched ? matched.role : 'Sales Representative',
+      token: `mock_jwt_token_${Date.now()}`,
+      isLoggedIn: true
+    };
+
+    localStorage.setItem('salesbot_auth_user', JSON.stringify(userObj));
+    localStorage.setItem('salesbot_auth_token', userObj.token);
+    return userObj;
+  },
+
+  async register(name, email, password, role = 'Sales Representative') {
+    try {
+      const res = await fetch(`${API_BASE}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, role })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const userObj = {
+          id: data.id || Date.now(),
+          name: data.name || name,
+          email: data.email || email,
+          role: data.role || role,
+          token: `jwt_${Date.now()}`,
+          isLoggedIn: true
+        };
+        localStorage.setItem('salesbot_auth_user', JSON.stringify(userObj));
+        localStorage.setItem('salesbot_auth_token', userObj.token);
+        return userObj;
+      }
+    } catch (err) {
+      console.warn('Backend Auth Register API offline, completing client registration', err);
+    }
+
+    const userObj = {
+      id: Date.now(),
+      name: name || 'New Sales User',
+      email: email || 'newuser@company.com',
+      role: role || 'Sales Representative',
+      token: `mock_jwt_token_${Date.now()}`,
+      isLoggedIn: true
+    };
+
+    localStorage.setItem('salesbot_auth_user', JSON.stringify(userObj));
+    localStorage.setItem('salesbot_auth_token', userObj.token);
+    return userObj;
+  },
+
+  logout() {
+    try {
+      localStorage.removeItem('salesbot_auth_user');
+      localStorage.removeItem('salesbot_auth_token');
+    } catch (e) {}
+    return true;
   }
 };
 
+export default apiService;

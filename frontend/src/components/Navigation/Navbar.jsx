@@ -5,10 +5,23 @@ import {
   Users, 
   BarChart3, 
   Calendar, 
-  Plus
+  Plus,
+  Code,
+  LogIn,
+  LogOut,
+  User
 } from 'lucide-react';
 
-export function Navbar({ activeTab, setActiveTab, onOpenLeadModal, onOpenMeetingModal }) {
+export function Navbar({ 
+  activeTab, 
+  setActiveTab, 
+  onOpenLeadModal, 
+  onOpenMeetingModal, 
+  onOpenEmbedModal,
+  currentUser,
+  onLogout,
+  onOpenLogin
+}) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'bot', label: 'Sales Bot API', icon: Bot },
@@ -16,6 +29,11 @@ export function Navbar({ activeTab, setActiveTab, onOpenLeadModal, onOpenMeeting
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'meetings', label: 'Meetings', icon: Calendar },
   ];
+
+  const getInitials = (name) => {
+    if (!name) return 'SR';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
 
   return (
     <header style={{ 
@@ -100,32 +118,21 @@ export function Navbar({ activeTab, setActiveTab, onOpenLeadModal, onOpenMeeting
                 >
                   <Icon size={16} color={isActive ? '#38bdf8' : '#64748b'} />
                   <span>{item.label}</span>
-                  {item.badge && (
-                    <span style={{
-                      fontSize: '0.6rem',
-                      padding: '2px 6px',
-                      borderRadius: '99px',
-                      background: 'linear-gradient(135deg, #ff9f00, #ffc107)',
-                      color: '#0c192c',
-                      fontWeight: '800'
-                    }}>
-                      {item.badge}
-                    </span>
-                  )}
                 </button>
               );
             })}
           </nav>
 
-          {/* Right: CTA Pill Buttons */}
+          {/* Right: CTA Pill Buttons & User Profile */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button 
-              onClick={onOpenMeetingModal}
+              onClick={onOpenEmbedModal}
+              title="Get Embed Code for Website"
               style={{
                 background: 'rgba(255, 255, 255, 0.08)',
                 color: '#ffffff',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
-                padding: '8px 16px',
+                padding: '8px 14px',
                 borderRadius: '9999px',
                 fontSize: '0.82rem',
                 fontWeight: '600',
@@ -136,31 +143,113 @@ export function Navbar({ activeTab, setActiveTab, onOpenLeadModal, onOpenMeeting
                 transition: 'all 0.2s'
               }}
             >
-              <Calendar size={14} color="#38bdf8" />
-              <span>Book Demo</span>
+              <Code size={14} color="#ff9f00" />
+              <span>Embed</span>
             </button>
 
-            <button 
-              onClick={onOpenLeadModal}
-              style={{
-                background: '#ffffff',
-                color: '#0c192c',
-                border: 'none',
-                padding: '8px 18px',
-                borderRadius: '9999px',
-                fontSize: '0.85rem',
-                fontWeight: '800',
-                cursor: 'pointer',
+            {currentUser && currentUser.isLoggedIn && (
+              <button 
+                onClick={onOpenLeadModal}
+                style={{
+                  background: '#ffffff',
+                  color: '#0c192c',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '9999px',
+                  fontSize: '0.82rem',
+                  fontWeight: '800',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 4px 14px rgba(255, 255, 255, 0.25)',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Plus size={15} color="#0072ff" />
+                <span>Add Lead</span>
+              </button>
+            )}
+
+            {/* Auth Profile Section */}
+            {currentUser && currentUser.isLoggedIn ? (
+              <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 4px 14px rgba(255, 255, 255, 0.25)',
-                transition: 'all 0.2s'
-              }}
-            >
-              <Plus size={16} color="#0072ff" />
-              <span>Add Lead</span>
-            </button>
+                gap: '8px',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.18)',
+                padding: '4px 8px 4px 6px',
+                borderRadius: '9999px',
+                marginLeft: '4px'
+              }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #0072ff, #00c6ff)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff',
+                  fontSize: '0.78rem',
+                  fontWeight: '800',
+                  border: '1.5px solid rgba(255, 255, 255, 0.4)'
+                }}>
+                  {getInitials(currentUser.name)}
+                </div>
+                <div style={{ textAlign: 'left', paddingRight: '4px' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: '700', color: '#ffffff', lineHeight: 1.1 }}>
+                    {currentUser.name}
+                  </div>
+                  <div style={{ fontSize: '0.65rem', color: '#ff9f00', fontWeight: '600' }}>
+                    {currentUser.role || 'Sales Rep'}
+                  </div>
+                </div>
+                <button
+                  onClick={onLogout}
+                  title="Sign Out of Account"
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.2)',
+                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                    color: '#f87171',
+                    borderRadius: '50%',
+                    width: '28px',
+                    height: '28px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <LogOut size={13} />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={onOpenLogin}
+                style={{
+                  background: 'linear-gradient(135deg, #0072ff, #00c6ff)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '9999px',
+                  fontSize: '0.82rem',
+                  fontWeight: '800',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 4px 14px rgba(0, 114, 255, 0.4)',
+                  marginLeft: '4px'
+                }}
+              >
+                <LogIn size={15} />
+                <span>Sign In</span>
+              </button>
+            )}
+
           </div>
 
         </div>
@@ -169,3 +258,5 @@ export function Navbar({ activeTab, setActiveTab, onOpenLeadModal, onOpenMeeting
     </header>
   );
 }
+
+export default Navbar;

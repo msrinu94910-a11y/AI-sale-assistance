@@ -38,7 +38,19 @@ DEFAULT_MEETINGS = [
 def get_meetings(db: Session = Depends(get_db)):
     meetings = db.query(Meeting).all()
     if not meetings:
-        return DEFAULT_MEETINGS
+        for m in DEFAULT_MEETINGS:
+            m_obj = Meeting(
+                lead_id=m["lead_id"],
+                lead_name=m["lead_name"],
+                title=m["title"],
+                meeting_date=datetime.fromisoformat(m["meeting_date"]),
+                duration_minutes=m["duration_minutes"],
+                status=m["status"],
+                notes=m["notes"]
+            )
+            db.add(m_obj)
+        db.commit()
+        meetings = db.query(Meeting).all()
     return meetings
 
 @router.post("", response_model=MeetingResponse, status_code=status.HTTP_201_CREATED)

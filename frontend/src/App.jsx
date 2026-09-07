@@ -7,11 +7,15 @@ import { LeadDetail } from './components/LeadCard/LeadDetail';
 import { AnalyticsView } from './components/Analytics/AnalyticsView';
 import { LeadModal } from './components/Forms/LeadModal';
 import { MeetingModal } from './components/Forms/MeetingModal';
+import { FloatingChatWidget } from './components/FloatingWidget/FloatingChatWidget';
+import { EmbedCodeModal } from './components/FloatingWidget/EmbedCodeModal';
+import { LoginPage } from './components/Auth/LoginPage';
 import { apiService } from './services/api';
 import { Calendar, Clock, CheckCircle, Pencil, Trash2, ArrowLeft } from 'lucide-react';
 
 export function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [currentUser, setCurrentUser] = useState(() => apiService.getCurrentUser());
   const [leads, setLeads] = useState([]);
   const [summary, setSummary] = useState(null);
   const [meetings, setMeetings] = useState([]);
@@ -19,9 +23,21 @@ export function App() {
   const [selectedLead, setSelectedLead] = useState(null);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
+  const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
 
   const [editingLead, setEditingLead] = useState(null);
   const [editingMeeting, setEditingMeeting] = useState(null);
+
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+    setActiveTab('dashboard');
+  };
+
+  const handleLogout = () => {
+    apiService.logout();
+    setCurrentUser(null);
+    setActiveTab('login');
+  };
 
   useEffect(() => {
     loadInitialData();
@@ -156,11 +172,22 @@ export function App() {
         setActiveTab={setActiveTab}
         onOpenLeadModal={handleOpenCreateLead}
         onOpenMeetingModal={handleOpenCreateMeeting}
+        onOpenEmbedModal={() => setIsEmbedModalOpen(true)}
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        onOpenLogin={() => setActiveTab('login')}
       />
 
       {/* Main Container */}
       <main style={{ flex: 1, maxWidth: '1400px', width: '100%', margin: '0 auto', padding: '24px' }}>
         
+        {activeTab === 'login' && (
+          <LoginPage
+            onLoginSuccess={handleLoginSuccess}
+            onCancel={() => setActiveTab('dashboard')}
+          />
+        )}
+
         {activeTab === 'dashboard' && (
           <DashboardView
             summary={summary}
@@ -169,6 +196,7 @@ export function App() {
             onOpenLeadModal={handleOpenCreateLead}
             onOpenMeetingModal={handleOpenCreateMeeting}
             onSelectLead={(lead) => setSelectedLead(lead)}
+            currentUser={currentUser}
           />
         )}
 
@@ -187,6 +215,7 @@ export function App() {
             onEditLead={handleOpenEditLead}
             onDeleteLead={handleDeleteLead}
             onBack={() => setActiveTab('dashboard')}
+            currentUser={currentUser}
           />
         )}
 
@@ -215,9 +244,11 @@ export function App() {
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Automated sales calendar integration</p>
                 </div>
               </div>
-              <button className="btn btn-gold" onClick={handleOpenCreateMeeting}>
-                <Calendar size={16} /> Book New Demo
-              </button>
+              {currentUser && currentUser.isLoggedIn && (
+                <button className="btn btn-gold" onClick={handleOpenCreateMeeting}>
+                  <Calendar size={16} /> Book New Demo
+                </button>
+              )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
@@ -278,6 +309,20 @@ export function App() {
         )}
 
       </main>
+
+      {/* Floating Website Chat Widget (<script> / Embeddable Mode) - Hidden when viewing Lead Detail drawer */}
+      {!selectedLead && (
+        <FloatingChatWidget
+          onLeadOrMeetingUpdated={loadInitialData}
+          onOpenEmbedModal={() => setIsEmbedModalOpen(true)}
+        />
+      )}
+
+      {/* Embed Code Snippet Generator Modal */}
+      <EmbedCodeModal
+        isOpen={isEmbedModalOpen}
+        onClose={() => setIsEmbedModalOpen(false)}
+      />
 
       {/* Slide-over Lead Detail Drawer */}
       {selectedLead && (

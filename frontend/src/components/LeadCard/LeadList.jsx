@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Plus, Flame, Building, Mail, Phone, UserPlus, Pencil, Trash2, ArrowLeft } from 'lucide-react';
 
-export function LeadList({ leads, onSelectLead, onOpenLeadModal, onEditLead, onDeleteLead, onBack }) {
+export function LeadList({ leads, onSelectLead, onOpenLeadModal, onEditLead, onDeleteLead, onBack, currentUser }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
 
@@ -87,10 +87,12 @@ export function LeadList({ leads, onSelectLead, onOpenLeadModal, onEditLead, onD
             ))}
           </div>
 
-          <button className="btn btn-gold" onClick={onOpenLeadModal}>
-            <UserPlus size={16} />
-            <span>+ Add New Lead</span>
-          </button>
+          {currentUser && currentUser.isLoggedIn && (
+            <button className="btn btn-gold" onClick={onOpenLeadModal}>
+              <UserPlus size={16} />
+              <span>+ Add New Lead</span>
+            </button>
+          )}
         </div>
       </div>
 

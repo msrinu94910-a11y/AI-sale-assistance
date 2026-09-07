@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Flame, Building, Mail, Phone, Calendar, Pencil, Trash2, ArrowLeft } from 'lucide-react';
+import { X, Flame, Building, Mail, Phone, Calendar, Pencil, Trash2 } from 'lucide-react';
 
 export function LeadDetail({ lead, onClose, onScheduleDemo, onEditLead, onDeleteLead }) {
   if (!lead) return null;
@@ -13,7 +13,7 @@ export function LeadDetail({ lead, onClose, onScheduleDemo, onEditLead, onDelete
       bottom: 0,
       background: 'rgba(15, 23, 42, 0.4)',
       backdropFilter: 'blur(6px)',
-      zIndex: 200,
+      zIndex: 10000,
       display: 'flex',
       justifyContent: 'flex-end'
     }}>
@@ -32,18 +32,10 @@ export function LeadDetail({ lead, onClose, onScheduleDemo, onEditLead, onDelete
         
         {/* Drawer Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <button
-            className="btn btn-secondary btn-icon"
-            onClick={onClose}
-            style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-            title="Back to Leads List"
-          >
-            <ArrowLeft size={14} /> Back
-          </button>
           <span className={`badge badge-${lead.category.toLowerCase()}`}>
             <Flame size={14} /> {lead.category} Lead ({lead.score} / 100)
           </span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }} title="Close Details">
             <X size={22} />
           </button>
         </div>

@@ -276,27 +276,62 @@ class SalesBotService:
             )
             return reply, "email_draft", ["Book Morning Slot", "Book Afternoon Slot", "View All Leads"], 15
 
+        # Features & Capabilities inquiry
+        elif any(p in msg_lower for p in ["feature", "capabilities", "what can you do", "function", "tool", "how it works", "overview", "service", "platform"]):
+            reply = (
+                "🚀 **SalesBot AI Core Capabilities & Features**:\n\n"
+                "1. **Automated BANT Lead Qualification**: Scores inbound prospects (0-100) on Budget, Need, Authority, and Timeline.\n"
+                "2. **24/7 Conversational AI Widget**: Embeddable website chat bubble for instant visitor engagement.\n"
+                "3. **1-Click Demo Meeting Booking**: Integrated sales calendar scheduling with zoom link generation.\n"
+                "4. **AI Outreach Email Generator**: Drafts personalized sales follow-up sequences in seconds.\n"
+                "5. **Real-time Pipeline Analytics**: Live conversion metrics, lead segmentation (Hot/Warm/Cold), and CRM database sync."
+            )
+            return reply, "features_inquiry", ["⚡ Book Demo", "💰 View Pricing Plans", "📊 Test BANT Scoring"], 15
+
+        # Integration & Embed inquiry
+        elif any(p in msg_lower for p in ["integrate", "integration", "api", "embed", "script", "website", "crm", "salesforce", "hubspot", "webhook"]):
+            reply = (
+                "🔌 **Seamless Integration & Website Embedding**:\n\n"
+                "• **1-Line Website Embed**: Copy `<script src='http://localhost:5173/widget.js'></script>` to deploy the chatbot on WordPress, Webflow, Shopify, or custom HTML.\n"
+                "• **REST API V1**: Full FastAPI endpoints (`/api/v1/bot/chat`, `/api/v1/leads`, `/api/v1/meetings`) for custom CRM sync.\n"
+                "• **Database Support**: Built-in SQLite/PostgreSQL synchronization with multi-turn session tracking."
+            )
+            return reply, "integration_inquiry", ["Get Embed Code", "Open Swagger Docs", "Book Demo"], 15
+
+        # Contact & Support inquiry
+        elif any(p in msg_lower for p in ["contact", "support", "help", "reach", "sales team", "human", "representative", "call"]):
+            reply = (
+                "📞 **Connect with Sales & Engineering Support**:\n\n"
+                "Our Solution Engineering team is ready to assist you:\n"
+                "• **Live Product Demo**: Book a 1-on-1 architecture call using our automated calendar.\n"
+                "• **Direct Support**: Email support@salesbot.ai or request an immediate call back.\n"
+                "• **Enterprise Consultation**: Custom SLA, dedicated Account Manager, and tailored workflow setup."
+            )
+            return reply, "contact_inquiry", ["Book 1-on-1 Demo", "Request Enterprise Quote"], 10
+
         # Greetings
         elif any(p in msg_lower for p in ["hi", "hello", "hey", "greetings", "good morning", "good afternoon"]) and len(message.split()) <= 4:
             reply = (
-                "Hello! I am your AI Sales Assistant Bot. I can qualify inbound leads using our BANT scoring matrix, "
-                "answer product and pricing questions, draft customized outreach emails, or book a live product demo. "
-                "How can I help you accelerate sales today?"
+                "Hello! 👋 I am your **SalesBot AI Assistant**.\n\n"
+                "I can answer product questions, calculate BANT lead scores, explain pricing, draft outreach emails, or book a live product demo for you.\n\n"
+                "What would you like to explore?"
             )
-            return reply, "greeting", ["Find a Product Demo", "Explain BANT Scoring", "View Pricing Plans", "Calculate Lead Score"], 5
+            return reply, "greeting", ["⚡ Book Demo", "💰 View Pricing Plans", "📊 Calculate Lead Score"], 5
 
         # General open-ended query synthesis
         else:
             clean_text = re.sub(r'[^\w\s]', '', message)
-            words = [w.capitalize() for w in clean_text.split() if len(w) > 3 and w.lower() not in ["what", "how", "this", "that", "there", "have", "with", "from", "your", "they", "about", "could", "would"]]
-            topic = ", ".join(words[:3]) if words else "Sales Pipeline Automation"
+            words = [w.capitalize() for w in clean_text.split() if len(w) > 3 and w.lower() not in ["what", "how", "this", "that", "there", "have", "with", "from", "your", "they", "about", "could", "would", "tell", "show", "give"]]
+            topic = ", ".join(words[:3]) if words else "Sales Automation Intelligence"
             reply = (
-                f"Analysis regarding '{topic}':\n\n"
-                f"SalesBot AI delivers end-to-end sales intelligence by combining conversational discovery with "
-                f"automated BANT lead qualification. You can query customer profiles, review pipeline metrics, "
-                f"generate email sequences, or schedule a live architecture review."
+                f"💡 **SalesBot AI Answer regarding '{topic}'**:\n\n"
+                f"SalesBot AI provides comprehensive sales automation designed to accelerate inbound lead conversions:\n\n"
+                f"• **Instant Discovery**: Visitors get instant answers to pricing, product specs, and architecture questions 24/7.\n"
+                f"• **Smart Scoring**: Every interaction is evaluated against your BANT criteria to qualify Hot Leads.\n"
+                f"• **Automated Booking**: High-intent prospects can select a demo slot directly in the chat, generating instant calendar invites.\n\n"
+                f"Would you like to test BANT lead scoring or book a live 1-on-1 demo call?"
             )
-            return reply, "general_inquiry", ["Explain How This Works", "Draft Outreach Email", "Book Product Demo"], 10
+            return reply, "general_inquiry", ["⚡ Book Demo", "💰 View Pricing Plans", "📊 Calculate Lead Score"], 10
 
     @classmethod
     def process_chat(cls, req: BotChatRequest, db: Session) -> BotChatResponse:

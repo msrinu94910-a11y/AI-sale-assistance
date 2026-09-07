@@ -11,7 +11,7 @@ import {
   Sparkles 
 } from 'lucide-react';
 
-export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, onOpenMeetingModal, onSelectLead }) {
+export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, onOpenMeetingModal, onSelectLead, currentUser }) {
   const sortedLeads = [...(leads || [])].sort((a, b) => (b.score || 0) - (a.score || 0));
 
   const stats = [
@@ -91,9 +91,11 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
               <Users size={18} />
               <span>View All Leads</span>
             </button>
-            <button className="btn btn-gold" onClick={onOpenLeadModal}>
-              <span>+ Add New Lead</span>
-            </button>
+            {currentUser && currentUser.isLoggedIn && (
+              <button className="btn btn-gold" onClick={onOpenLeadModal}>
+                <span>+ Add New Lead</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
