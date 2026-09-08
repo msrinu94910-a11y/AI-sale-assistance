@@ -87,12 +87,10 @@ export function LeadList({ leads, onSelectLead, onOpenLeadModal, onEditLead, onD
             ))}
           </div>
 
-          {currentUser && currentUser.isLoggedIn && (
-            <button className="btn btn-gold" onClick={onOpenLeadModal}>
-              <UserPlus size={16} />
-              <span>+ Add New Lead</span>
-            </button>
-          )}
+          <button className="btn btn-gold" onClick={onOpenLeadModal}>
+            <UserPlus size={16} />
+            <span>+ Add New Lead</span>
+          </button>
         </div>
       </div>
 

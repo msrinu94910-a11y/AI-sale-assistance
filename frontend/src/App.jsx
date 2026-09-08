@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navigation/Navbar';
+import { LandingPage } from './components/LandingPage/LandingPage';
 import { DashboardView } from './components/Dashboard/DashboardView';
 import { BotPlayground } from './components/BotPlayground/BotPlayground';
 import { LeadList } from './components/LeadCard/LeadList';
@@ -7,14 +8,16 @@ import { LeadDetail } from './components/LeadCard/LeadDetail';
 import { AnalyticsView } from './components/Analytics/AnalyticsView';
 import { LeadModal } from './components/Forms/LeadModal';
 import { MeetingModal } from './components/Forms/MeetingModal';
+import { AuthRequiredModal } from './components/Forms/AuthRequiredModal';
 import { FloatingChatWidget } from './components/FloatingWidget/FloatingChatWidget';
 import { EmbedCodeModal } from './components/FloatingWidget/EmbedCodeModal';
 import { LoginPage } from './components/Auth/LoginPage';
+import { MeetingsView } from './components/Meetings/MeetingsView';
 import { apiService } from './services/api';
 import { Calendar, Clock, CheckCircle, Pencil, Trash2, ArrowLeft } from 'lucide-react';
 
 export function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('landing');
   const [currentUser, setCurrentUser] = useState(() => apiService.getCurrentUser());
   const [leads, setLeads] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -27,21 +30,41 @@ export function App() {
 
   const [editingLead, setEditingLead] = useState(null);
   const [editingMeeting, setEditingMeeting] = useState(null);
+  const [loginNotice, setLoginNotice] = useState('');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMessage, setAuthModalMessage] = useState('');
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
-    setActiveTab('dashboard');
+    if (loginNotice && loginNotice.includes('add new leads')) {
+      setLoginNotice('');
+      setActiveTab('leads');
+      setIsLeadModalOpen(true);
+    } else {
+      setLoginNotice('');
+      setActiveTab('dashboard');
+    }
   };
 
   const handleLogout = () => {
     apiService.logout();
     setCurrentUser(null);
+    setLoginNotice('');
     setActiveTab('login');
   };
 
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  // Protect Dashboard & Workspace views — open Sign In if not logged in
+  useEffect(() => {
+    const protectedTabs = ['dashboard', 'bot', 'leads', 'analytics', 'meetings'];
+    if (protectedTabs.includes(activeTab) && (!currentUser || !currentUser.isLoggedIn)) {
+      setLoginNotice('Please Sign In or Create an Account to access the Sales Bot API & Workspace.');
+      setActiveTab('login');
+    }
+  }, [activeTab, currentUser]);
 
   const loadInitialData = async () => {
     try {
@@ -59,11 +82,21 @@ export function App() {
   };
 
   const handleOpenCreateLead = () => {
+    if (!currentUser || !currentUser.isLoggedIn) {
+      setAuthModalMessage("You can only add a lead if you sign in. Please Sign In to create and manage sales leads.");
+      setIsAuthModalOpen(true);
+      return;
+    }
     setEditingLead(null);
     setIsLeadModalOpen(true);
   };
 
   const handleOpenEditLead = (lead) => {
+    if (!currentUser || !currentUser.isLoggedIn) {
+      setAuthModalMessage("You can only edit a lead if you sign in. Please Sign In to modify lead details.");
+      setIsAuthModalOpen(true);
+      return;
+    }
     setEditingLead(lead);
     setIsLeadModalOpen(true);
   };
@@ -115,6 +148,11 @@ export function App() {
   };
 
   const handleDeleteLead = async (leadId) => {
+    if (!currentUser || !currentUser.isLoggedIn) {
+      setLoginNotice('Please Sign In or Create an Account to delete leads.');
+      setActiveTab('login');
+      return;
+    }
     try {
       await apiService.deleteLead(leadId);
       setLeads((prev) => prev.filter((l) => l.id !== leadId));
@@ -127,11 +165,21 @@ export function App() {
   };
 
   const handleOpenCreateMeeting = () => {
+    if (!currentUser || !currentUser.isLoggedIn) {
+      setLoginNotice('Please Sign In or Create an Account to schedule demo meetings.');
+      setActiveTab('login');
+      return;
+    }
     setEditingMeeting(null);
     setIsMeetingModalOpen(true);
   };
 
   const handleOpenEditMeeting = (meeting) => {
+    if (!currentUser || !currentUser.isLoggedIn) {
+      setLoginNotice('Please Sign In or Create an Account to edit meetings.');
+      setActiveTab('login');
+      return;
+    }
     setEditingMeeting(meeting);
     setIsMeetingModalOpen(true);
   };
@@ -155,6 +203,11 @@ export function App() {
   };
 
   const handleDeleteMeeting = async (meetingId) => {
+    if (!currentUser || !currentUser.isLoggedIn) {
+      setLoginNotice('Please Sign In or Create an Account to delete meetings.');
+      setActiveTab('login');
+      return;
+    }
     try {
       await apiService.deleteMeeting(meetingId);
       setMeetings((prev) => prev.filter((m) => m.id !== meetingId));
@@ -166,25 +219,43 @@ export function App() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
-      {/* Global Navbar */}
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onOpenLeadModal={handleOpenCreateLead}
-        onOpenMeetingModal={handleOpenCreateMeeting}
-        onOpenEmbedModal={() => setIsEmbedModalOpen(true)}
-        currentUser={currentUser}
-        onLogout={handleLogout}
-        onOpenLogin={() => setActiveTab('login')}
-      />
+      {/* Global Navbar - Hidden on Sign In Page */}
+      {activeTab !== 'login' && (
+        <Navbar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onOpenLeadModal={handleOpenCreateLead}
+          onOpenMeetingModal={handleOpenCreateMeeting}
+          onOpenEmbedModal={() => setIsEmbedModalOpen(true)}
+          currentUser={currentUser}
+          onLogout={handleLogout}
+          onOpenLogin={() => {
+            setLoginNotice('');
+            setActiveTab('login');
+          }}
+        />
+      )}
 
       {/* Main Container */}
       <main style={{ flex: 1, maxWidth: '1400px', width: '100%', margin: '0 auto', padding: '24px' }}>
         
+        {activeTab === 'landing' && (
+          <LandingPage
+            setActiveTab={setActiveTab}
+            onOpenLeadModal={handleOpenCreateLead}
+            onOpenEmbedModal={() => setIsEmbedModalOpen(true)}
+            currentUser={currentUser}
+          />
+        )}
+
         {activeTab === 'login' && (
           <LoginPage
             onLoginSuccess={handleLoginSuccess}
-            onCancel={() => setActiveTab('dashboard')}
+            onCancel={() => {
+              setLoginNotice('');
+              setActiveTab('landing');
+            }}
+            noticeMessage={loginNotice}
           />
         )}
 
@@ -227,85 +298,14 @@ export function App() {
         )}
 
         {activeTab === 'meetings' && (
-          <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div className="glass-panel" style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <button
-                  className="btn btn-secondary btn-icon"
-                  onClick={() => setActiveTab('dashboard')}
-                  style={{ padding: '8px 14px', fontSize: '0.85rem' }}
-                  title="Back to Dashboard"
-                >
-                  <ArrowLeft size={16} />
-                  <span>Back</span>
-                </button>
-                <div>
-                  <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>Scheduled Meetings & Product Demos</h2>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Automated sales calendar integration</p>
-                </div>
-              </div>
-              {currentUser && currentUser.isLoggedIn && (
-                <button className="btn btn-gold" onClick={handleOpenCreateMeeting}>
-                  <Calendar size={16} /> Book New Demo
-                </button>
-              )}
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
-              {meetings.map((m) => (
-                <div key={m.id} className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <span className="badge badge-success">
-                      <CheckCircle size={12} /> {m.status}
-                    </span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Clock size={12} /> {m.duration_minutes} mins
-                    </span>
-                  </div>
-
-                  <div>
-                    <h3 style={{ fontSize: '1.05rem', color: 'var(--text-primary)' }}>{m.title}</h3>
-                    <div style={{ fontSize: '0.85rem', color: '#0072ff', marginTop: '2px', fontWeight: '700' }}>
-                      {m.lead_name}
-                    </div>
-                  </div>
-
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', background: '#eef4fc', padding: '10px', borderRadius: '6px', border: '1px solid #bcccdc' }}>
-                    📅 {new Date(m.meeting_date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                  </div>
-
-                  {m.notes && (
-                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                      Note: {m.notes}
-                    </p>
-                  )}
-
-                  {/* Card Actions: Edit & Delete */}
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid var(--border-color)' }}>
-                    <button
-                      className="btn btn-secondary btn-icon"
-                      onClick={() => handleOpenEditMeeting(m)}
-                      title="Edit Meeting"
-                    >
-                      <Pencil size={13} /> Edit
-                    </button>
-                    <button
-                      className="btn btn-danger btn-icon"
-                      onClick={() => {
-                        if (window.confirm(`Are you sure you want to delete meeting "${m.title}"?`)) {
-                          handleDeleteMeeting(m.id);
-                        }
-                      }}
-                      title="Delete Meeting"
-                    >
-                      <Trash2 size={13} /> Delete
-                    </button>
-                  </div>
-
-                </div>
-              ))}
-            </div>
-          </div>
+          <MeetingsView
+            meetings={meetings}
+            onOpenCreateMeeting={handleOpenCreateMeeting}
+            onEditMeeting={handleOpenEditMeeting}
+            onDeleteMeeting={handleDeleteMeeting}
+            onBack={() => setActiveTab('dashboard')}
+            currentUser={currentUser}
+          />
         )}
 
       </main>
@@ -359,6 +359,18 @@ export function App() {
         onSubmit={handleSaveMeeting}
         selectedLead={selectedLead}
         meetingToEdit={editingMeeting}
+      />
+
+      {/* Auth Required Popup Message Modal */}
+      <AuthRequiredModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onGoToLogin={() => {
+          setIsAuthModalOpen(false);
+          setLoginNotice("You can only add a lead if you sign in. Please Sign In to continue.");
+          setActiveTab('login');
+        }}
+        message={authModalMessage}
       />
 
     </div>

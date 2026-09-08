@@ -87,15 +87,15 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
           </div>
 
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button className="btn btn-primary" onClick={() => setActiveTab('leads')}>
-              <Users size={18} />
-              <span>View All Leads</span>
-            </button>
             {currentUser && currentUser.isLoggedIn && (
-              <button className="btn btn-gold" onClick={onOpenLeadModal}>
-                <span>+ Add New Lead</span>
+              <button className="btn btn-primary" onClick={() => setActiveTab('leads')}>
+                <Users size={18} />
+                <span>View All Leads</span>
               </button>
             )}
+            <button className="btn btn-gold" onClick={onOpenLeadModal}>
+              <span>+ Add New Lead</span>
+            </button>
           </div>
         </div>
       </div>
@@ -137,9 +137,11 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
               <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)' }}>High Priority Qualified Leads</h3>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Ranked by AI BANT Lead Score</p>
             </div>
-            <button className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} onClick={() => setActiveTab('leads')}>
-              View All Leads ({leads?.length || 4})
-            </button>
+            {currentUser && currentUser.isLoggedIn && (
+              <button className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} onClick={() => setActiveTab('leads')}>
+                View All Leads ({leads?.length || 4})
+              </button>
+            )}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
