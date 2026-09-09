@@ -30,3 +30,11 @@ class MeetingResponse(MeetingBase):
     class Config:
         from_attributes = True
 
+class TimeSlotResponse(BaseModel):
+    time: str
+    datetime: str
+    available: bool
+    conflict_title: Optional[str] = None
+    conflict_lead: Optional[str] = None
+
+

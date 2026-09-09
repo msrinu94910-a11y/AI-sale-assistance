@@ -1,5 +1,7 @@
+import csv
+import io
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, UploadFile, File
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.lead import Lead
@@ -103,6 +105,131 @@ def get_leads(category: Optional[str] = None, db: Session = Depends(get_db)):
     if category:
         leads = [l for l in leads if l.category.lower() == category.lower()]
     return leads
+
+@router.get("/export")
+@router.get("/export/", include_in_schema=False)
+def export_leads(category: Optional[str] = None, db: Session = Depends(get_db)):
+    leads = db.query(Lead).all()
+    if not leads:
+        leads_data = DEFAULT_LEADS
+    else:
+        leads_data = [
+            {
+                "id": l.id,
+                "name": l.name,
+                "email": l.email,
+                "phone": l.phone or "",
+                "company": l.company or "",
+                "status": l.status or "New",
+                "budget": l.budget or 50,
+                "need": l.need or 50,
+                "authority": l.authority or 50,
+                "timeline": l.timeline or 50,
+                "score": l.score or 50,
+                "category": l.category or "Warm",
+                "notes": l.notes or "",
+                "created_at": l.created_at.isoformat() if l.created_at else ""
+            }
+            for l in leads
+        ]
+
+    if category:
+        leads_data = [l for l in leads_data if (l.get("category") or "").lower() == category.lower()]
+
+    output = io.StringIO()
+    fieldnames = ["id", "name", "email", "phone", "company", "status", "budget", "need", "authority", "timeline", "score", "category", "notes", "created_at"]
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+    for row in leads_data:
+        writer.writerow({k: row.get(k, "") for k in fieldnames})
+
+    csv_content = output.getvalue()
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=leads_export.csv"}
+    )
+
+@router.post("/import")
+@router.post("/import/", include_in_schema=False)
+async def import_leads(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Only CSV files are supported")
+    
+    contents = await file.read()
+    try:
+        text_data = contents.decode('utf-8-sig')
+    except Exception:
+        text_data = contents.decode('latin-1')
+        
+    stream = io.StringIO(text_data)
+    reader = csv.DictReader(stream)
+    
+    imported_leads = []
+    errors = []
+    row_index = 1
+
+    for row in reader:
+        row_index += 1
+        normalized_row = { (k.strip().lower() if k else ''): (v.strip() if v else '') for k, v in row.items() }
+        
+        name = normalized_row.get('name') or normalized_row.get('full name') or normalized_row.get('lead name')
+        email = normalized_row.get('email') or normalized_row.get('email address')
+        
+        if not name or not email:
+            errors.append(f"Row {row_index}: Missing required Name or Email field")
+            continue
+            
+        phone = normalized_row.get('phone') or normalized_row.get('phone number') or None
+        company = normalized_row.get('company') or normalized_row.get('organization') or None
+        status_val = normalized_row.get('status') or "New"
+        notes = normalized_row.get('notes') or None
+        
+        def parse_int(val, default=50):
+            try:
+                return int(float(val)) if val != '' else default
+            except (ValueError, TypeError):
+                return default
+                
+        budget = parse_int(normalized_row.get('budget'))
+        need = parse_int(normalized_row.get('need'))
+        authority = parse_int(normalized_row.get('authority'))
+        timeline = parse_int(normalized_row.get('timeline'))
+        
+        eval_result = LeadQualificationEngine.evaluate_lead(
+            budget=budget,
+            need=need,
+            authority=authority,
+            timeline=timeline
+        )
+        
+        lead_obj = Lead(
+            name=name,
+            email=email,
+            phone=phone,
+            company=company,
+            status=status_val,
+            budget=budget,
+            need=need,
+            authority=authority,
+            timeline=timeline,
+            score=eval_result["score"],
+            category=eval_result["category"],
+            notes=notes
+        )
+        db.add(lead_obj)
+        imported_leads.append(lead_obj)
+
+    db.commit()
+    for l in imported_leads:
+        db.refresh(l)
+        
+    return {
+        "success": True,
+        "imported_count": len(imported_leads),
+        "errors": errors,
+        "leads": [LeadResponse.model_validate(l) if hasattr(LeadResponse, "model_validate") else LeadResponse.from_orm(l) for l in imported_leads]
+    }
 
 @router.post("", response_model=LeadResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=LeadResponse, status_code=status.HTTP_201_CREATED, include_in_schema=False)

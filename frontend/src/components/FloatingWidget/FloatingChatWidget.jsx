@@ -4,7 +4,6 @@ import { apiService } from '../../services/api';
 
 export function FloatingChatWidget({ onLeadOrMeetingUpdated, onOpenEmbedModal }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [showWelcomeBanner, setShowWelcomeBanner] = useState(true);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -138,55 +137,6 @@ export function FloatingChatWidget({ onLeadOrMeetingUpdated, onOpenEmbedModal })
   return (
     <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9990, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
       
-      {/* Welcome Banner Popup */}
-      {!isOpen && showWelcomeBanner && (
-        <div
-          className="animate-fade-in"
-          style={{
-            marginBottom: '12px',
-            background: 'linear-gradient(135deg, #0c192c 0%, #1a2b4c 100%)',
-            color: '#ffffff',
-            padding: '14px 18px',
-            borderRadius: '18px',
-            boxShadow: '0 12px 35px rgba(0, 114, 255, 0.25)',
-            border: '1px solid rgba(0, 114, 255, 0.3)',
-            maxWidth: '280px',
-            position: 'relative',
-            fontSize: '0.85rem',
-            lineHeight: '1.45',
-            cursor: 'pointer'
-          }}
-          onClick={handleToggleWidget}
-        >
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowWelcomeBanner(false);
-            }}
-            style={{
-              position: 'absolute',
-              top: '8px',
-              right: '10px',
-              background: 'none',
-              border: 'none',
-              color: '#94a3b8',
-              cursor: 'pointer',
-              fontSize: '0.75rem'
-            }}
-            title="Dismiss"
-          >
-            <X size={14} />
-          </button>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', fontWeight: '700', color: 'var(--logo-gold-bright)' }}>
-            <Sparkles size={16} /> <span>SalesBot AI Online</span>
-          </div>
-          <p style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>
-            👋 Have questions or want a live demo? Chat with our AI Sales Assistant now!
-          </p>
-        </div>
-      )}
-
       {/* Expanded Floating Chat Window */}
       {isOpen && (
         <div

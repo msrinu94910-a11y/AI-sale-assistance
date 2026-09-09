@@ -405,6 +405,196 @@ export const apiService = {
     return true;
   },
 
+  async exportLeadsCSV(category = '') {
+    try {
+      const url = category && category !== 'All' ? `${API_BASE}/leads/export?category=${category}` : `${API_BASE}/leads/export`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const blob = await res.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `leads_export_${category ? category.toLowerCase() : 'all'}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+        return true;
+      }
+    } catch (err) {
+      console.warn('API export unavailable, exporting local client-side leads', err);
+    }
+
+    let leads = getLocalLeads() || DEFAULT_INITIAL_LEADS;
+    if (category && category !== 'All') {
+      leads = leads.filter(l => (l.category || '').toLowerCase() === category.toLowerCase());
+    }
+
+    const headers = ['id', 'name', 'email', 'phone', 'company', 'status', 'budget', 'need', 'authority', 'timeline', 'score', 'category', 'notes', 'created_at'];
+    const rows = leads.map(l => [
+      l.id || '',
+      `"${(l.name || '').replace(/"/g, '""')}"`,
+      `"${(l.email || '').replace(/"/g, '""')}"`,
+      `"${(l.phone || '').replace(/"/g, '""')}"`,
+      `"${(l.company || '').replace(/"/g, '""')}"`,
+      `"${(l.status || 'New').replace(/"/g, '""')}"`,
+      l.budget ?? 50,
+      l.need ?? 50,
+      l.authority ?? 50,
+      l.timeline ?? 50,
+      l.score ?? 50,
+      `"${(l.category || 'Warm').replace(/"/g, '""')}"`,
+      `"${(l.notes || '').replace(/"/g, '""')}"`,
+      `"${(l.created_at || new Date().toISOString()).replace(/"/g, '""')}"`
+    ].join(','));
+
+    const csvStr = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `leads_export_${category ? category.toLowerCase() : 'all'}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+    return true;
+  },
+
+  async importLeadsCSV(file) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`${API_BASE}/leads/import`, {
+        method: 'POST',
+        body: formData
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.leads && data.leads.length > 0) {
+          let local = getLocalLeads() || DEFAULT_INITIAL_LEADS;
+          const updated = [...data.leads, ...local];
+          saveLocalLeads(updated);
+        }
+        return data;
+      }
+    } catch (err) {
+      console.warn('API import unavailable, parsing CSV client-side', err);
+    }
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target.result;
+          const lines = text.split(/\r\n|\n/).filter(line => line.trim().length > 0);
+          if (lines.length <= 1) {
+            resolve({ success: false, imported_count: 0, errors: ['CSV file appears empty or has no header row.'], leads: [] });
+            return;
+          }
+
+          const headerRow = lines[0].split(',').map(h => h.replace(/^["']|["']$/g, '').trim().toLowerCase());
+          const importedLeads = [];
+          const errors = [];
+
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i];
+            const rawTokens = line.split(',');
+            // Recombine quoted values split by comma
+            const values = [];
+            let inQuotes = false;
+            let currentToken = '';
+            for (let char of line) {
+              if (char === '"' || char === "'") {
+                inQuotes = !inQuotes;
+              } else if (char === ',' && !inQuotes) {
+                values.push(currentToken.replace(/^["']|["']$/g, '').trim());
+                currentToken = '';
+              } else {
+                currentToken += char;
+              }
+            }
+            if (currentToken || line.endsWith(',')) {
+              values.push(currentToken.replace(/^["']|["']$/g, '').trim());
+            }
+
+            const rowObj = {};
+            headerRow.forEach((h, idx) => {
+              rowObj[h] = values[idx] || '';
+            });
+
+            const name = rowObj['name'] || rowObj['full name'] || rowObj['lead name'];
+            const email = rowObj['email'] || rowObj['email address'];
+
+            if (!name || !email) {
+              errors.push(`Row ${i + 1}: Missing required Name or Email`);
+              continue;
+            }
+
+            const budget = parseInt(rowObj['budget']) || 50;
+            const need = parseInt(rowObj['need']) || 50;
+            const authority = parseInt(rowObj['authority']) || 50;
+            const timeline = parseInt(rowObj['timeline']) || 50;
+
+            const score = Math.round(budget * 0.25 + need * 0.30 + authority * 0.20 + timeline * 0.25);
+            const category = score >= 71 ? 'Hot' : score >= 41 ? 'Warm' : 'Cold';
+
+            const newLead = {
+              id: Date.now() + i,
+              name,
+              email,
+              phone: rowObj['phone'] || rowObj['phone number'] || '',
+              company: rowObj['company'] || rowObj['organization'] || 'Enterprise',
+              status: rowObj['status'] || 'New',
+              budget,
+              need,
+              authority,
+              timeline,
+              score,
+              category,
+              notes: rowObj['notes'] || '',
+              created_at: new Date().toISOString()
+            };
+
+            importedLeads.push(newLead);
+          }
+
+          let local = getLocalLeads() || DEFAULT_INITIAL_LEADS;
+          const updated = [...importedLeads, ...local];
+          saveLocalLeads(updated);
+
+          resolve({
+            success: true,
+            imported_count: importedLeads.length,
+            errors,
+            leads: importedLeads
+          });
+        } catch (err) {
+          reject(err);
+        }
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsText(file);
+    });
+  },
+
+  downloadSampleCSVTemplate() {
+    const csvContent = "Name,Email,Phone,Company,Status,Budget,Need,Authority,Timeline,Notes\n" +
+      "Samantha Reed,samantha@nexus.io,+1 555-0199,Nexus Global,New,85,80,75,90,Interested in AI CRM automation\n" +
+      "Gregory House,house@diagnostics.com,+1 555-0143,Princeton Labs,Contacted,60,65,70,50,Requested pricing matrix\n" +
+      "Clara Oswald,clara@tardis.org,+1 555-0177,Time Dynamics,Qualified,95,90,85,95,Urgent deployment required\n";
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = 'salesbot_leads_template.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+  },
+
   // Analytics API
   async getAnalyticsSummary() {
     try {
@@ -455,8 +645,59 @@ export const apiService = {
     }
   },
 
+  async getAvailableSlots(targetDateStr, durationMinutes = 30) {
+    try {
+      const res = await fetch(`${API_BASE}/meetings/available-slots?target_date=${targetDateStr}&duration_minutes=${durationMinutes}`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('API getAvailableSlots unavailable, computing client-side', err);
+    }
+
+    const local = getLocalMeetings() || DEFAULT_INITIAL_MEETINGS;
+    const slotHours = [
+      "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+      "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"
+    ];
+
+    const slots = slotHours.map(sh => {
+      const [h, m] = sh.split(':').map(Number);
+      const slotDate = new Date(`${targetDateStr}T${sh}:00`);
+      const slotStart = slotDate.getTime();
+      const slotEnd = slotStart + durationMinutes * 60000;
+
+      let isAvailable = true;
+      let conflictTitle = null;
+      let conflictLead = null;
+
+      for (const ex of local) {
+        if (ex.status === 'Cancelled') continue;
+        const exStart = new Date(ex.meeting_date).getTime();
+        const exEnd = exStart + (ex.duration_minutes || 30) * 60000;
+
+        if (!isNaN(exStart) && slotStart < exEnd && slotEnd > exStart) {
+          isAvailable = false;
+          conflictTitle = ex.title;
+          conflictLead = ex.lead_name;
+          break;
+        }
+      }
+
+      const time12 = slotDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return {
+        time: time12,
+        datetime: slotDate.toISOString(),
+        available: isAvailable,
+        conflict_title: conflictTitle,
+        conflict_lead: conflictLead
+      };
+    });
+
+    return slots;
+  },
+
   async createMeeting(meetingData) {
-    let createdObj = null;
     try {
       const res = await fetch(`${API_BASE}/meetings`, {
         method: 'POST',
@@ -464,31 +705,46 @@ export const apiService = {
         body: JSON.stringify(meetingData)
       });
       if (res.ok) {
-        createdObj = await res.json();
+        const createdObj = await res.json();
+        let local = getLocalMeetings() || DEFAULT_INITIAL_MEETINGS;
+        saveLocalMeetings([createdObj, ...local.filter(m => m.id !== createdObj.id)]);
+        return createdObj;
+      }
+      if (res.status === 409 || res.status === 400) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.detail || 'Time slot conflict: Selected time overlaps with another meeting.');
       }
     } catch (err) {
+      if (err.message && (err.message.includes('conflict') || err.message.includes('overlaps'))) {
+        throw err;
+      }
       console.warn('API connection offline, using client-side meeting creation', err);
     }
 
-    if (!createdObj) {
-      createdObj = {
-        id: Date.now(),
-        ...meetingData,
-        created_at: new Date().toISOString()
-      };
+    const local = getLocalMeetings() || DEFAULT_INITIAL_MEETINGS;
+    const newStart = new Date(meetingData.meeting_date).getTime();
+    const newEnd = newStart + (meetingData.duration_minutes || 30) * 60000;
+
+    for (const ex of local) {
+      if (ex.status === 'Cancelled') continue;
+      const exStart = new Date(ex.meeting_date).getTime();
+      const exEnd = exStart + (ex.duration_minutes || 30) * 60000;
+      if (!isNaN(exStart) && newStart < exEnd && newEnd > exStart) {
+        throw new Error(`Time slot conflict: Meeting overlaps with '${ex.title}' for ${ex.lead_name}.`);
+      }
     }
 
-    let local = getLocalMeetings();
-    if (!local || local.length === 0) {
-      local = DEFAULT_INITIAL_MEETINGS;
-    }
+    const createdObj = {
+      id: Date.now(),
+      ...meetingData,
+      created_at: new Date().toISOString()
+    };
+
     saveLocalMeetings([createdObj, ...local.filter(m => m.id !== createdObj.id)]);
-
     return createdObj;
   },
 
   async updateMeeting(meetingId, meetingData) {
-    let updatedObj = null;
     try {
       const res = await fetch(`${API_BASE}/meetings/${meetingId}`, {
         method: 'PUT',
@@ -496,17 +752,38 @@ export const apiService = {
         body: JSON.stringify(meetingData)
       });
       if (res.ok) {
-        updatedObj = await res.json();
+        const updatedObj = await res.json();
+        let local = getLocalMeetings() || DEFAULT_INITIAL_MEETINGS;
+        saveLocalMeetings(local.map(m => m.id === meetingId ? { ...m, ...updatedObj } : m));
+        return updatedObj;
+      }
+      if (res.status === 409 || res.status === 400) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.detail || 'Time slot conflict: Selected time overlaps with another meeting.');
       }
     } catch (err) {
+      if (err.message && (err.message.includes('conflict') || err.message.includes('overlaps'))) {
+        throw err;
+      }
       console.warn('Meeting update API unavailable, updating client-side', err);
     }
 
-    if (!updatedObj) {
-      updatedObj = { id: meetingId, ...meetingData };
+    const local = getLocalMeetings() || DEFAULT_INITIAL_MEETINGS;
+    if (meetingData.meeting_date && (meetingData.status || 'Scheduled') !== 'Cancelled') {
+      const newStart = new Date(meetingData.meeting_date).getTime();
+      const newEnd = newStart + (meetingData.duration_minutes || 30) * 60000;
+
+      for (const ex of local) {
+        if (ex.id === meetingId || ex.status === 'Cancelled') continue;
+        const exStart = new Date(ex.meeting_date).getTime();
+        const exEnd = exStart + (ex.duration_minutes || 30) * 60000;
+        if (!isNaN(exStart) && newStart < exEnd && newEnd > exStart) {
+          throw new Error(`Time slot conflict: Meeting overlaps with '${ex.title}' for ${ex.lead_name}.`);
+        }
+      }
     }
 
-    let local = getLocalMeetings();
+    const updatedObj = { id: meetingId, ...meetingData };
     if (local) {
       saveLocalMeetings(local.map(m => m.id === meetingId ? { ...m, ...updatedObj } : m));
     }

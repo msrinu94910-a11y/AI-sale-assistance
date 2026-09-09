@@ -8,6 +8,7 @@ import { LeadDetail } from './components/LeadCard/LeadDetail';
 import { AnalyticsView } from './components/Analytics/AnalyticsView';
 import { LeadModal } from './components/Forms/LeadModal';
 import { MeetingModal } from './components/Forms/MeetingModal';
+import { ImportCSVModal } from './components/Forms/ImportCSVModal';
 import { AuthRequiredModal } from './components/Forms/AuthRequiredModal';
 import { FloatingChatWidget } from './components/FloatingWidget/FloatingChatWidget';
 import { EmbedCodeModal } from './components/FloatingWidget/EmbedCodeModal';
@@ -27,6 +28,7 @@ export function App() {
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
+  const [isImportCSVModalOpen, setIsImportCSVModalOpen] = useState(false);
 
   const [editingLead, setEditingLead] = useState(null);
   const [editingMeeting, setEditingMeeting] = useState(null);
@@ -164,6 +166,27 @@ export function App() {
     }
   };
 
+  const handleExportCSV = async (category) => {
+    try {
+      await apiService.exportLeadsCSV(category);
+    } catch (err) {
+      console.error('Error exporting leads CSV:', err);
+    }
+  };
+
+  const handleOpenImportCSVModal = () => {
+    if (!currentUser || !currentUser.isLoggedIn) {
+      setAuthModalMessage("You can only import leads if you sign in. Please Sign In to bulk import sales leads.");
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsImportCSVModalOpen(true);
+  };
+
+  const handleImportCSVSuccess = async (result) => {
+    await loadInitialData();
+  };
+
   const handleOpenCreateMeeting = () => {
     if (!currentUser || !currentUser.isLoggedIn) {
       setLoginNotice('Please Sign In or Create an Account to schedule demo meetings.');
@@ -191,14 +214,17 @@ export function App() {
         const updated = await apiService.updateMeeting(editingMeeting.id, meetingData);
         setMeetings((prev) => prev.map((m) => (m.id === editingMeeting.id ? { ...m, ...updated } : m)));
         setEditingMeeting(null);
+        return updated;
       } else {
         // Schedule new meeting
         const created = await apiService.createMeeting(meetingData);
         setMeetings((prev) => [created, ...prev]);
         setActiveTab('meetings');
+        return created;
       }
     } catch (err) {
       console.error('Error saving meeting:', err);
+      throw err;
     }
   };
 
@@ -287,6 +313,8 @@ export function App() {
             onDeleteLead={handleDeleteLead}
             onBack={() => setActiveTab('dashboard')}
             currentUser={currentUser}
+            onExportCSV={handleExportCSV}
+            onOpenImportModal={handleOpenImportCSVModal}
           />
         )}
 
@@ -359,6 +387,7 @@ export function App() {
         onSubmit={handleSaveMeeting}
         selectedLead={selectedLead}
         meetingToEdit={editingMeeting}
+        existingMeetings={meetings}
       />
 
       {/* Auth Required Popup Message Modal */}
@@ -371,6 +400,13 @@ export function App() {
           setActiveTab('login');
         }}
         message={authModalMessage}
+      />
+
+      {/* Bulk Import CSV Modal */}
+      <ImportCSVModal
+        isOpen={isImportCSVModalOpen}
+        onClose={() => setIsImportCSVModalOpen(false)}
+        onImportSuccess={handleImportCSVSuccess}
       />
 
     </div>

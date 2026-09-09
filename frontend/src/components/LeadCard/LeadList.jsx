@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Search, Plus, Flame, Building, Mail, Phone, UserPlus, Pencil, Trash2, ArrowLeft } from 'lucide-react';
+import { Search, Plus, Flame, Building, Mail, Phone, UserPlus, Pencil, Trash2, ArrowLeft, Download, Upload } from 'lucide-react';
 
-export function LeadList({ leads, onSelectLead, onOpenLeadModal, onEditLead, onDeleteLead, onBack, currentUser }) {
+export function LeadList({ leads, onSelectLead, onOpenLeadModal, onEditLead, onDeleteLead, onBack, currentUser, onExportCSV, onOpenImportModal }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
 
@@ -86,6 +86,27 @@ export function LeadList({ leads, onSelectLead, onOpenLeadModal, onEditLead, onD
               </button>
             ))}
           </div>
+
+          {/* CSV Export & Import Controls */}
+          <button
+            className="btn btn-secondary"
+            onClick={() => onExportCSV && onExportCSV(filterCategory)}
+            title="Export Lead Directory to CSV file"
+            style={{ fontSize: '0.85rem', padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <Download size={15} />
+            <span>Export CSV</span>
+          </button>
+
+          <button
+            className="btn btn-secondary"
+            onClick={onOpenImportModal}
+            title="Bulk Import Leads from CSV file"
+            style={{ fontSize: '0.85rem', padding: '9px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <Upload size={15} />
+            <span>Import CSV</span>
+          </button>
 
           <button className="btn btn-gold" onClick={onOpenLeadModal}>
             <UserPlus size={16} />
