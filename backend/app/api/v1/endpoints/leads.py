@@ -19,10 +19,10 @@ DEFAULT_LEADS = [
         "phone": "+1 555-0192",
         "company": "Cyberdyne Systems",
         "status": "Qualified",
-        "budget": 90,
-        "need": 85,
-        "authority": 80,
-        "timeline": 95,
+        "budget_max": 20000000,
+        "location_preference": "Gachibowli",
+        "property_type_preference": "Villa",
+        "buying_timeline": "Within 3 months",
         "score": 88,
         "category": "Hot",
         "notes": "Looking for Enterprise AI CRM integration for 150+ reps.",
@@ -35,10 +35,10 @@ DEFAULT_LEADS = [
         "phone": "+1 555-0144",
         "company": "Apex Dynamics",
         "status": "Contacted",
-        "budget": 70,
-        "need": 65,
-        "authority": 60,
-        "timeline": 50,
+        "budget_max": 15000000,
+        "location_preference": "Kondapur",
+        "property_type_preference": "Apartment",
+        "buying_timeline": "Within 6 months",
         "score": 62,
         "category": "Warm",
         "notes": "Interested in automated email follow-ups and lead scoring.",
@@ -51,10 +51,10 @@ DEFAULT_LEADS = [
         "phone": "+1 555-0188",
         "company": "QuantumScale Tech",
         "status": "Proposal",
-        "budget": 95,
-        "need": 90,
-        "authority": 85,
-        "timeline": 90,
+        "budget_max": 30000000,
+        "location_preference": "Jubilee Hills",
+        "property_type_preference": "Villa",
+        "buying_timeline": "Immediately",
         "score": 91,
         "category": "Hot",
         "notes": "Contract in final legal review for Q4 deployment.",
@@ -67,10 +67,10 @@ DEFAULT_LEADS = [
         "phone": "+1 555-0122",
         "company": "Horizon Cloud",
         "status": "New",
-        "budget": 30,
-        "need": 40,
-        "authority": 30,
-        "timeline": 20,
+        "budget_max": 8000000,
+        "location_preference": "Narsingi",
+        "property_type_preference": "Plot",
+        "buying_timeline": "1 year",
         "score": 31,
         "category": "Cold",
         "notes": "Initial inquiry downloaded product whitepaper.",
@@ -90,10 +90,10 @@ def get_leads(category: Optional[str] = None, db: Session = Depends(get_db)):
                 phone=d["phone"],
                 company=d["company"],
                 status=d["status"],
-                budget=d["budget"],
-                need=d["need"],
-                authority=d["authority"],
-                timeline=d["timeline"],
+                budget_max=d["budget_max"],
+                location_preference=d["location_preference"],
+                property_type_preference=d["property_type_preference"],
+                buying_timeline=d["buying_timeline"],
                 score=d["score"],
                 category=d["category"],
                 notes=d["notes"]
@@ -121,10 +121,10 @@ def export_leads(category: Optional[str] = None, db: Session = Depends(get_db)):
                 "phone": l.phone or "",
                 "company": l.company or "",
                 "status": l.status or "New",
-                "budget": l.budget or 50,
-                "need": l.need or 50,
-                "authority": l.authority or 50,
-                "timeline": l.timeline or 50,
+                "budget_max": l.budget_max,
+                "location_preference": l.location_preference or "",
+                "property_type_preference": l.property_type_preference or "",
+                "buying_timeline": l.buying_timeline or "",
                 "score": l.score or 50,
                 "category": l.category or "Warm",
                 "notes": l.notes or "",
@@ -137,7 +137,7 @@ def export_leads(category: Optional[str] = None, db: Session = Depends(get_db)):
         leads_data = [l for l in leads_data if (l.get("category") or "").lower() == category.lower()]
 
     output = io.StringIO()
-    fieldnames = ["id", "name", "email", "phone", "company", "status", "budget", "need", "authority", "timeline", "score", "category", "notes", "created_at"]
+    fieldnames = ["id", "name", "email", "phone", "company", "status", "budget_max", "location_preference", "property_type_preference", "buying_timeline", "score", "category", "notes", "created_at"]
     writer = csv.DictWriter(output, fieldnames=fieldnames)
     writer.writeheader()
     for row in leads_data:
@@ -191,34 +191,29 @@ async def import_leads(file: UploadFile = File(...), db: Session = Depends(get_d
             except (ValueError, TypeError):
                 return default
                 
-        budget = parse_int(normalized_row.get('budget'))
-        need = parse_int(normalized_row.get('need'))
-        authority = parse_int(normalized_row.get('authority'))
-        timeline = parse_int(normalized_row.get('timeline'))
+        budget_max = parse_int(normalized_row.get('budget_max'))
         
-        eval_result = LeadQualificationEngine.evaluate_lead(
-            budget=budget,
-            need=need,
-            authority=authority,
-            timeline=timeline
-        )
+        # We don't have a LeadQualificationEngine scoring model for the new schema yet, 
+        # so just insert with default score.
+        score = 50
+        category = "Warm"
         
-        lead_obj = Lead(
+        db_lead = Lead(
             name=name,
             email=email,
             phone=phone,
             company=company,
             status=status_val,
-            budget=budget,
-            need=need,
-            authority=authority,
-            timeline=timeline,
-            score=eval_result["score"],
-            category=eval_result["category"],
+            budget_max=budget_max,
+            location_preference=normalized_row.get('location_preference'),
+            property_type_preference=normalized_row.get('property_type_preference'),
+            buying_timeline=normalized_row.get('buying_timeline'),
+            score=score,
+            category=category,
             notes=notes
         )
-        db.add(lead_obj)
-        imported_leads.append(lead_obj)
+        db.add(db_lead)
+        imported_leads.append(db_lead)
 
     db.commit()
     for l in imported_leads:

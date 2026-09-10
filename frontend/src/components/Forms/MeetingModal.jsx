@@ -167,7 +167,7 @@ export function MeetingModal({
       justifyContent: 'center',
       padding: '20px'
     }}>
-      <div className="glass-panel animate-fade-in" style={{
+      <div className="glass-panel animate-fade-in md-modal-content" style={{
         width: '100%',
         maxWidth: '520px',
         maxHeight: '88vh',
@@ -269,7 +269,7 @@ export function MeetingModal({
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="md-grid-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
               <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: '700' }}>
                 Date & Time *

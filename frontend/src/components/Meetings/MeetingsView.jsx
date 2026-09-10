@@ -166,7 +166,7 @@ export function MeetingsView({
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
 
       {/* Top Header Panel */}
       <div className="glass-panel" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
@@ -249,7 +249,7 @@ export function MeetingsView({
 
       {/* 📅 INTERACTIVE CALENDAR GRID VIEW */}
       {viewMode === 'calendar' && (
-        <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
 
           {/* Calendar Month Header & Controls */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -299,8 +299,10 @@ export function MeetingsView({
             </span>
           </div>
 
-          {/* Days of Week Header */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', textAlign: 'center' }}>
+          <div className="md-table-responsive">
+            <div style={{ minWidth: '600px' }}>
+              {/* Days of Week Header */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', textAlign: 'center' }}>
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
               <div key={i} style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 {d}
@@ -437,8 +439,10 @@ export function MeetingsView({
               );
             })}
 
+            </div>
           </div>
         </div>
+      </div>
       )}
 
       {/* 🗂️ DEDICATED DEMO SCHEDULE INSPECTOR PANEL */}
@@ -486,7 +490,7 @@ export function MeetingsView({
             <p style={{ color: '#64748b', fontSize: '0.82rem', margin: 0 }}>Click "Book New Demo" above to schedule a new product demo.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px', marginTop: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', marginTop: '8px' }}>
             {filteredMeetings.map((m) => (
               <div key={m.id} className="glass-panel animate-fade-in" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', position: 'relative', background: '#ffffff' }}>
 

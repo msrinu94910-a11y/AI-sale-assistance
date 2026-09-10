@@ -16,7 +16,7 @@ export function AuthRequiredModal({ isOpen, onClose, onGoToLogin, message }) {
       justifyContent: 'center',
       padding: '16px'
     }}>
-      <div className="glass-panel animate-fade-in" style={{
+      <div className="glass-panel animate-fade-in md-modal-content" style={{
         width: '100%',
         maxWidth: '480px',
         background: '#ffffff',
@@ -31,7 +31,7 @@ export function AuthRequiredModal({ isOpen, onClose, onGoToLogin, message }) {
           background: 'linear-gradient(135deg, #0c192c 0%, #152a4a 100%)',
           color: '#ffffff',
           display: 'flex',
-          justify: 'space-between',
+          justifyContent: 'space-between',
           alignItems: 'center',
           gap: '16px'
         }}>
@@ -110,7 +110,7 @@ export function AuthRequiredModal({ isOpen, onClose, onGoToLogin, message }) {
           padding: '16px 24px 24px 24px',
           display: 'flex',
           gap: '12px',
-          justify: 'center',
+          justifyContent: 'center',
           background: '#f8fafc',
           borderTop: '1px solid #e2e8f0'
         }}>

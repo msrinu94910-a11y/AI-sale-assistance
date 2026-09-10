@@ -133,7 +133,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
     }}>
       
       {/* 🎬 1. DARK CINEMATIC HERO SECTION WITH ACCENT LIGHTING */}
-      <section style={{
+      <section className="md-p-4" style={{
         position: 'relative',
         borderRadius: '24px',
         background: 'linear-gradient(180deg, #0a111e 0%, #0c182c 60%, #07101b 100%)',
@@ -197,7 +197,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
           </div>
 
           {/* Headline with Serif Italic Emphasis */}
-          <h1 style={{
+          <h1 className="md-text-2xl" style={{
             fontSize: '2.6rem',
             fontWeight: '900',
             lineHeight: 1.15,
@@ -317,7 +317,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
       </section>
 
       {/* ☀️ 2. WARM CREAM SECTION: 3 KEY FEATURE CARDS WITH YELLOW BADGES */}
-      <section style={{ padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <section className="md-p-4" style={{ padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto' }}>
           <div style={{
             display: 'inline-flex',
@@ -459,7 +459,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
       </section>
 
       {/* 🧩 3. 3x3 CAPABILITIES GRID (9 STRUCTURED CARDS) */}
-      <section style={{ padding: '28px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <section className="md-p-4" style={{ padding: '28px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#0072ff', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             PLATFORM CAPABILITIES
@@ -504,7 +504,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
       </section>
 
       {/* 🔍 4. ALTERNATING DEEP DIVE FEATURE SHOWCASES (WITH SCREEN MOCKUPS) */}
-      <section style={{ padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <section className="md-p-4" style={{ padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
         {/* Showcase 1: Text Left, UI Mockup Right */}
         <div style={{
@@ -558,8 +558,8 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
       </section>
 
       {/* 🎛️ 5. INTERACTIVE REVENUE TELEMETRY & LIVE SALES CONSOLE (DEEP MIDNIGHT OBSIDIAN THEME) */}
-      <section style={{ padding: '0 16px', marginBottom: '24px' }}>
-        <div style={{
+      <section className="md-p-2" style={{ padding: '0 16px', marginBottom: '24px' }}>
+        <div className="md-p-4" style={{
           background: 'linear-gradient(135deg, #040812 0%, #081122 50%, #03060d 100%)',
           borderRadius: '20px',
           padding: '24px 24px 20px 24px',
@@ -743,8 +743,8 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
       </section>
 
       {/* 💬 6. EXECUTIVE TESTIMONIAL QUOTE BOX */}
-      <section style={{ padding: '16px 16px 24px 16px' }}>
-        <div style={{
+      <section className="md-p-4" style={{ padding: '16px 16px 24px 16px' }}>
+        <div className="md-p-4" style={{
           background: '#ffffff',
           borderRadius: '20px',
           padding: '24px',

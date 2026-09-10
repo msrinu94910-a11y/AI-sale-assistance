@@ -8,10 +8,13 @@ class LeadBase(BaseModel):
     phone: Optional[str] = None
     company: Optional[str] = None
     status: Optional[str] = "New"
-    budget: Optional[int] = 50
-    need: Optional[int] = 50
-    authority: Optional[int] = 50
-    timeline: Optional[int] = 50
+    location_preference: Optional[str] = None
+    property_type_preference: Optional[str] = None
+    bhk_preference: Optional[int] = None
+    budget_min: Optional[int] = None
+    budget_max: Optional[int] = None
+    purpose: Optional[str] = None
+    buying_timeline: Optional[str] = None
     notes: Optional[str] = None
 
 class LeadCreate(LeadBase):
@@ -23,10 +26,13 @@ class LeadUpdate(BaseModel):
     phone: Optional[str] = None
     company: Optional[str] = None
     status: Optional[str] = None
-    budget: Optional[int] = None
-    need: Optional[int] = None
-    authority: Optional[int] = None
-    timeline: Optional[int] = None
+    location_preference: Optional[str] = None
+    property_type_preference: Optional[str] = None
+    bhk_preference: Optional[int] = None
+    budget_min: Optional[int] = None
+    budget_max: Optional[int] = None
+    purpose: Optional[str] = None
+    buying_timeline: Optional[str] = None
     notes: Optional[str] = None
 
 class LeadResponse(LeadBase):

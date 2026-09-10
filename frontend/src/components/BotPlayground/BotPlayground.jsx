@@ -103,6 +103,7 @@ export function BotPlayground({ onLeadOrMeetingUpdated, onBack }) {
         sender: 'assistant',
         text: resp.reply || "Message received.",
         intent: resp.intent,
+        properties: resp.properties || [],
         suggested_actions: resp.suggested_actions || [],
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
@@ -235,7 +236,7 @@ export function BotPlayground({ onLeadOrMeetingUpdated, onBack }) {
       </div>
 
       {/* Main Content Area */}
-      <div style={{ display: 'grid', gridTemplateColumns: showJsonInspector ? '1fr 1fr' : '2fr 1fr', gap: '16px' }}>
+      <div className="md-grid-1" style={{ display: 'grid', gridTemplateColumns: showJsonInspector ? '1fr 1fr' : '2fr 1fr', gap: '16px' }}>
         
         {/* Left: Chat Window */}
         <div className="glass-panel" style={{ 
@@ -304,6 +305,32 @@ export function BotPlayground({ onLeadOrMeetingUpdated, onBack }) {
                               Auto-Synced Lead: {m.lead.name} ({m.lead.category || 'Warm'})
                             </span>
                           )}
+                        </div>
+                      )}
+
+                      {/* Property Cards */}
+                      {!isUser && m.properties && m.properties.length > 0 && (
+                        <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '10px 0', width: '100%' }}>
+                          {m.properties.map((prop, idx) => (
+                            <div key={idx} style={{
+                              minWidth: '220px',
+                              background: '#ffffff',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '8px',
+                              padding: '12px',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                            }}>
+                              <h4 style={{ margin: '0 0 6px 0', fontSize: '0.9rem', color: '#0f172a' }}>{prop.name}</h4>
+                              <p style={{ margin: '0 0 4px 0', fontSize: '0.75rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}><Building size={12}/> {prop.property_type} • {prop.bhk ? `${prop.bhk} BHK` : 'Plot'}</p>
+                              <p style={{ margin: '0 0 8px 0', fontSize: '0.8rem', color: '#0072ff', fontWeight: '700' }}>
+                                ₹{prop.price >= 10000000 ? `${(prop.price / 10000000).toFixed(2)} Cr` : `${(prop.price / 100000).toFixed(2)} Lakhs`}
+                              </p>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <button className="btn btn-primary" style={{ fontSize: '0.7rem', padding: '4px 8px', flex: 1 }}>Details</button>
+                                <button className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '4px 8px', flex: 1 }}>Compare</button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
 

@@ -6,9 +6,12 @@ class ExtractedEntities(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
-    company: Optional[str] = None
-    budget: Optional[str] = None
-    need: Optional[str] = None
+    location: Optional[str] = None
+    property_type: Optional[str] = None
+    bhk: Optional[int] = None
+    budget_max: Optional[int] = None
+    budget_min: Optional[int] = None
+    purpose: Optional[str] = None
     timeline: Optional[str] = None
 
 class LeadSyncStatus(BaseModel):
@@ -34,17 +37,20 @@ class BotChatResponse(BaseModel):
     suggested_actions: List[str] = []
     lead: Optional[LeadSyncStatus] = None
     score_change: int = 0
+    properties: Optional[List[Dict[str, Any]]] = None
     timestamp: datetime
 
 class BotQualifyRequest(BaseModel):
     name: str
     email: EmailStr
-    company: Optional[str] = None
     phone: Optional[str] = None
-    budget: int = Field(50, ge=0, le=100, description="Budget score 0-100 (25% weight)")
-    need: int = Field(50, ge=0, le=100, description="Business need score 0-100 (30% weight)")
-    authority: int = Field(50, ge=0, le=100, description="Decision authority score 0-100 (20% weight)")
-    timeline: int = Field(50, ge=0, le=100, description="Urgency / timeline score 0-100 (25% weight)")
+    location_preference: Optional[str] = None
+    property_type_preference: Optional[str] = None
+    bhk_preference: Optional[int] = None
+    budget_min: Optional[int] = None
+    budget_max: Optional[int] = None
+    purpose: Optional[str] = None
+    buying_timeline: Optional[str] = None
     notes: Optional[str] = None
 
 class BotQualifyResponse(BaseModel):
@@ -52,7 +58,7 @@ class BotQualifyResponse(BaseModel):
     name: str
     score: int
     category: str
-    bant_breakdown: Dict[str, int]
+    requirements_breakdown: Dict[str, Any]
     recommended_action: str
     created_or_updated: bool
 

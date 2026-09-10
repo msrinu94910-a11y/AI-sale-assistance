@@ -116,7 +116,7 @@ export function LeadList({ leads, onSelectLead, onOpenLeadModal, onEditLead, onD
       </div>
 
       {/* Lead Cards List */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
         {filteredLeads.map((lead) => (
           <div
             key={lead.id}

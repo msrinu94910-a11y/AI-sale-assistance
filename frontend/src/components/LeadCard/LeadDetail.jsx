@@ -17,7 +17,7 @@ export function LeadDetail({ lead, onClose, onScheduleDemo, onEditLead, onDelete
       display: 'flex',
       justifyContent: 'flex-end'
     }}>
-      <div className="glass-panel animate-fade-in" style={{
+      <div className="glass-panel animate-fade-in md-drawer-content" style={{
         width: '460px',
         height: '100%',
         borderRadius: '0',

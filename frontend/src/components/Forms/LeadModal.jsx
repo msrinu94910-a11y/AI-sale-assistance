@@ -87,7 +87,7 @@ export function LeadModal({ isOpen, onClose, onSubmit, leadToEdit = null }) {
       justifyContent: 'center',
       padding: '16px'
     }}>
-      <div className="glass-panel animate-fade-in" style={{
+      <div className="glass-panel animate-fade-in md-modal-content" style={{
         width: '100%',
         maxWidth: '580px',
         maxHeight: '85vh',
@@ -123,7 +123,7 @@ export function LeadModal({ isOpen, onClose, onSubmit, leadToEdit = null }) {
           
           <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* Basic Fields */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="md-grid-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: '700' }}>Lead Full Name *</label>
                 <input
@@ -148,7 +148,7 @@ export function LeadModal({ isOpen, onClose, onSubmit, leadToEdit = null }) {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="md-grid-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: '700' }}>Company Name</label>
                 <input
@@ -228,7 +228,7 @@ export function LeadModal({ isOpen, onClose, onSubmit, leadToEdit = null }) {
             padding: '16px 24px',
             borderTop: '1px solid #e2e8f0',
             display: 'flex',
-            justify: 'flex-end',
+            justifyContent: 'flex-end',
             gap: '12px',
             boxShadow: '0 -4px 12px rgba(0,0,0,0.05)',
             zIndex: 10

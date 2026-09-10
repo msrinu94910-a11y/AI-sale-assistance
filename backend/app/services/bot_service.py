@@ -3,11 +3,13 @@ import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional, Tuple
 from sqlalchemy.orm import Session
+from sqlalchemy import or_, and_
 
 from app.core.config import settings
 from app.models.conversation import Conversation
 from app.models.lead import Lead
 from app.models.meeting import Meeting
+from app.models.property import Property
 from app.schemas.bot import (
     BotChatRequest,
     BotChatResponse,
@@ -21,12 +23,12 @@ from app.schemas.bot import (
 
 class SalesBotService:
     """
-    Dedicated API Sales Assistant Bot Service supporting:
+    Dedicated AI Real Estate Sales Assistant Service supporting:
     1. Multi-turn Session Management & Conversation History
-    2. Dynamic Entity Extraction (Name, Email, Phone, Company, Budget, Timeline)
+    2. Dynamic Entity Extraction (Name, Email, Phone, Location, BHK, Budget, Property Type)
     3. Multi-Provider LLM Integration (Gemini, Groq, OpenAI)
-    4. Resilient Offline Conversational Engine (Zero 429 Quota Failures)
-    5. Automatic Lead Capture & Demo Meeting Scheduling
+    4. Database-backed Property Search & Recommendation
+    5. Automatic Lead Capture & Site Visit Scheduling
     """
 
     @classmethod
@@ -56,67 +58,59 @@ class SalesBotService:
                     entities.name = candidate_name
                     break
 
-        # 4. Company extraction
-        company_patterns = [
-            r"(?:at|from|with|company is|work at|representing)\s+([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+)?(?:\s+(?:Inc|LLC|Corp|Technologies|Tech|Systems|Solutions|Labs))?)",
-            r"(?:company:\s*)([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+)?)"
-        ]
-        for pat in company_patterns:
-            cm = re.search(pat, text, re.IGNORECASE)
-            if cm:
-                candidate = cm.group(1).strip()
-                if candidate.lower() not in ["the", "a", "our", "my", "this", "home", "work"]:
-                    entities.company = candidate.title()
-                    break
+        # 4. Property Type extraction
+        text_lower = text.lower()
+        if "villa" in text_lower:
+            entities.property_type = "Villa"
+        elif "apartment" in text_lower or "flat" in text_lower:
+            entities.property_type = "Apartment"
+        elif "plot" in text_lower or "land" in text_lower:
+            entities.property_type = "Plot"
 
-        # 5. Budget extraction
-        budget_match = re.search(r'(\$\s?[\d,]+(?:\.\d+)?(?:k|m|b)?|\b[\d,]+(?:\.\d+)?\s*(?:k|thousand|million|crore|lakh|usd|dollars)\b)', text, re.IGNORECASE)
-        if budget_match:
-            entities.budget = budget_match.group(0).strip()
+        # 5. BHK extraction
+        bhk_match = re.search(r'(\d)\s*(?:bhk|bedroom|bed)', text_lower)
+        if bhk_match:
+            entities.bhk = int(bhk_match.group(1))
 
-        # 6. Timeline extraction
-        timeline_match = re.search(r'(immediately|asap|this month|next month|q[1-4]|within\s+\d+\s+(?:days|weeks|months)|in\s+\d+\s+(?:weeks|months))', text, re.IGNORECASE)
-        if timeline_match:
-            entities.timeline = timeline_match.group(0).strip()
+        # 6. Budget extraction (rough heuristic for Indian context e.g., 1.5 Cr, 80 Lakhs)
+        budget_cr = re.search(r'([\d\.]+)\s*(?:cr|crore|crores)', text_lower)
+        if budget_cr:
+            try:
+                entities.budget_max = int(float(budget_cr.group(1)) * 10000000)
+            except: pass
+        else:
+            budget_lakh = re.search(r'([\d\.]+)\s*(?:lakh|lakhs|lac|lacs)', text_lower)
+            if budget_lakh:
+                try:
+                    entities.budget_max = int(float(budget_lakh.group(1)) * 100000)
+                except: pass
+
+        # 7. Location extraction (looking for common cities/areas as a fallback)
+        locations = ["hyderabad", "gachibowli", "kondapur", "madhapur", "banjara hills", "jubilee hills", "narsingi"]
+        for loc in locations:
+            if loc in text_lower:
+                entities.location = loc.title()
+                break
 
         return entities
 
     @classmethod
-    def call_external_llm(cls, message: str, history: List[Dict[str, str]], context: Dict[str, Any]) -> Optional[str]:
-        """
-        Attempts to call available LLMs in order of preference:
-        1. Google Gemini (Generous free tier)
-        2. Groq Cloud (Free fast inference)
-        3. OpenAI (Standard GPT model)
-        Returns response string if successful, or None to fall back to internal engine.
-        """
+    def call_external_llm(cls, message: str, history: List[Dict[str, str]], context: Dict[str, Any], property_context: str = "") -> Optional[str]:
         system_prompt = (
-            "You are SalesBot API, an elite enterprise B2B sales development representative. "
-            "Your objective: qualify inbound leads using the BANT framework (Budget, Need, Authority, Timeline), "
-            "answer product and pricing inquiries accurately, extract prospect details, and guide them to schedule a live product demo. "
-            "Keep answers concise, confident, structured, and action-oriented."
+            "You are an elite AI Real Estate Property Assistant for our website. "
+            "Your objective: Help website visitors find their dream property, answer questions about locations and prices, "
+            "extract their requirements (Location, BHK, Budget, Property Type), and guide them to schedule a site visit. "
+            "Do NOT hallucinate properties. Only recommend properties provided in the context below.\n\n"
+            f"AVAILABLE PROPERTY CONTEXT (from database):\n{property_context if property_context else 'No specific properties found yet. Ask for requirements.'}\n\n"
+            "Keep answers concise, helpful, and natural. Always push the conversation forward."
         )
 
         import httpx
 
-        # Detect Groq Key (gsk_...) or Grok Key (xai-...) or explicit settings
-        groq_key = (
-            context.get("groq_api_key") or 
-            context.get("grok_api_key") or 
-            settings.GROQ_API_KEY or 
-            settings.GROK_API_KEY or
-            (settings.OPENAI_API_KEY if settings.OPENAI_API_KEY.startswith("gsk_") else None)
-        )
-
-        # 1. Try Groq Cloud (Ultra-fast LLM inference)
+        groq_key = context.get("groq_api_key") or settings.GROQ_API_KEY
         if groq_key:
             try:
-                groq_models = [
-                    settings.GROQ_MODEL or "openai/gpt-oss-20b",
-                    "openai/gpt-oss-20b",
-                    "groq/compound",
-                    "qwen/qwen3.8-27b"
-                ]
+                groq_models = ["llama3-8b-8192", "mixtral-8x7b-32768", "gemma-7b-it"]
                 headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
                 
                 messages = [{"role": "system", "content": system_prompt}]
@@ -139,27 +133,6 @@ class SalesBotService:
             except Exception:
                 pass
 
-        # 2. Try xAI Grok API (if using xai-... key)
-        xai_key = context.get("xai_api_key") or (settings.GROK_API_KEY if settings.GROK_API_KEY.startswith("xai-") else None)
-        if xai_key:
-            try:
-                url = "https://api.x.ai/v1/chat/completions"
-                headers = {"Authorization": f"Bearer {xai_key}", "Content-Type": "application/json"}
-                payload = {
-                    "model": "grok-beta",
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": message}
-                    ]
-                }
-                with httpx.Client(timeout=8.0) as client:
-                    resp = client.post(url, headers=headers, json=payload)
-                    if resp.status_code == 200:
-                        return resp.json()["choices"][0]["message"]["content"]
-            except Exception:
-                pass
-
-        # 3. Try Gemini API
         gemini_key = context.get("gemini_api_key") or settings.GEMINI_API_KEY
         if gemini_key:
             try:
@@ -173,7 +146,6 @@ class SalesBotService:
             except Exception:
                 pass
 
-        # 4. Try OpenAI API (Standard sk-... key)
         openai_key = context.get("openai_api_key") or settings.OPENAI_API_KEY
         if openai_key and openai_key.startswith("sk-"):
             try:
@@ -204,141 +176,66 @@ class SalesBotService:
         cls, 
         message: str, 
         entities: ExtractedEntities, 
-        history_count: int
+        history_count: int,
+        properties: List[Property]
     ) -> Tuple[str, str, List[str], int]:
         """
-        Zero-failure conversational synthesizer with context awareness.
-        Returns: (reply_text, intent, suggested_actions, score_delta)
+        Zero-failure conversational synthesizer fallback.
         """
         msg_lower = message.lower()
 
-        # Slot booking confirmation
-        if any(p in msg_lower for p in ["morning slot", "afternoon slot", "book morning", "book afternoon", "confirm demo", "confirm slot"]) or ("slot" in msg_lower and ("morning" in msg_lower or "afternoon" in msg_lower)):
-            slot_name = "Tomorrow Afternoon at 2:00 PM EST" if "afternoon" in msg_lower else "Tomorrow Morning at 10:30 AM EST"
+        if any(p in msg_lower for p in ["visit", "site visit", "book", "schedule", "see the property", "tour"]):
             reply = (
-                f"✅ Demo Confirmed! Your personalized Product Demo & Architecture Review is booked for **{slot_name}**.\n\n"
-                f"• Calendar invitation and Zoom link generated.\n"
-                f"• Agenda: Automated BANT Lead Scoring, API integration, and custom workflow setup.\n"
-                f"• Our Solution Specialist will meet you directly on the call."
+                "I'd be happy to arrange a site visit for you! Seeing the property in person is the best way to experience it.\n\n"
+                "Would you prefer to visit during the weekday or weekend? Let me know a time that works for you."
             )
-            return reply, "demo_booked", ["View Scheduled Meetings", "Qualify Another Lead", "Compare Plans"], 30
+            return reply, "site_visit_prompt", ["Book this Weekend", "Book Tomorrow", "Ask for location"], 20
 
-        # Booking prompt / inquiry
-        elif any(p in msg_lower for p in ["demo", "schedule", "meeting", "book", "call", "calendar", "appointment"]):
+        if len(properties) > 0:
+            prop_lines = []
+            for i, p in enumerate(properties[:3]):
+                price_str = f"{p.price / 10000000} Cr" if p.price >= 10000000 else f"{p.price / 100000} Lakhs"
+                bhk_str = f"{p.bhk} BHK " if p.bhk else ""
+                prop_lines.append(f"{i+1}. **{p.name}** - {bhk_str}{p.property_type} in {p.location} for ₹{price_str}")
+                
             reply = (
-                "I would love to set you up with a live 1-on-1 Product Demo & Architecture Review with our senior solutions engineer.\n\n"
-                "We have slots available this week. Which time works best for your schedule?\n"
-                "• Morning Slot: Tomorrow at 10:30 AM EST\n"
-                "• Afternoon Slot: Tomorrow at 2:00 PM EST"
+                f"I found some great properties that match your requirements:\n\n" + 
+                "\n".join(prop_lines) +
+                "\n\nWould you like more details on any of these, or would you like to schedule a site visit?"
             )
-            return reply, "demo_scheduling_prompt", ["Book Morning Slot", "Book Afternoon Slot", "Open Demo Calendar"], 20
+            return reply, "property_recommendation", ["Compare Properties", "Schedule Site Visit", "Modify Budget"], 15
 
-        # Pricing & plans
-        elif any(p in msg_lower for p in ["price", "pricing", "cost", "plan", "quote", "tier", "subscription"]):
+        if entities.location or entities.budget_max or entities.property_type:
             reply = (
-                "SalesBot AI offers flexible tiers designed for growing sales teams:\n\n"
-                "1. Starter ($49 / user / month):\n"
-                "   - Core BANT Lead Scoring Matrix\n"
-                "   - Automated Lead Dashboard & Pipeline Tracking\n\n"
-                "2. Professional ($99 / user / month):\n"
-                "   - Conversational AI Assistant & 1-Click Calendar Booking\n"
-                "   - Advanced Analytics & Automated Follow-up Sequences\n\n"
-                "3. Enterprise (Custom Quote):\n"
-                "   - Unlimited Seats, SSO, Dedicated SLA, and Custom REST API Integrations."
+                "Got it. I'm noting down your requirements. To give you the best matches, could you tell me:\n"
             )
-            return reply, "pricing_inquiry", ["Book Demo for Pricing", "Request Enterprise Quote", "Compare Features"], 15
-
-        # BANT scoring & qualification questions
-        elif any(p in msg_lower for p in ["bant", "qualify", "qualification", "score", "scoring", "budget", "authority", "timeline"]):
-            reply = (
-                "Our automated BANT Qualification Engine scores prospects from 0 to 100:\n\n"
-                "• Budget (25% weight): Purchasing capacity and investment readiness.\n"
-                "• Need (30% weight): Business pain points and platform fit.\n"
-                "• Authority (20% weight): Decision-maker level (C-level, VP, Manager).\n"
-                "• Timeline (25% weight): Urgency to deploy within 30-90 days.\n\n"
-                "Leads scoring 71+ are classified as 🔥 Hot Leads for immediate outreach."
-            )
-            return reply, "bant_explanation", ["Calculate BANT Score", "Filter Hot Leads", "Add New Lead"], 15
-
-        # Email drafting
-        elif any(p in msg_lower for p in ["email", "outreach", "draft", "template", "follow up"]):
-            recipient = entities.name or "Prospect"
-            company = entities.company or "your organization"
-            reply = (
-                f"Here is a customized outreach email draft for {recipient}:\n\n"
-                f"Subject: Accelerating {company}'s Sales Pipeline with Automated AI Scoring\n\n"
-                f"Hi {recipient},\n\n"
-                f"I noticed your focus on scaling your sales pipeline. Teams using SalesBot AI have reduced "
-                f"lead qualification time by 60% with automated BANT scoring and calendar booking.\n\n"
-                f"I'd love to share a brief 15-minute walkthrough of how this integrates into your CRM.\n"
-                f"Would Thursday at 2:00 PM or Friday at 10:30 AM work best for a quick chat?\n\n"
-                f"Best regards,\nSales Development Team"
-            )
-            return reply, "email_draft", ["Book Morning Slot", "Book Afternoon Slot", "View All Leads"], 15
-
-        # Features & Capabilities inquiry
-        elif any(p in msg_lower for p in ["feature", "capabilities", "what can you do", "function", "tool", "how it works", "overview", "service", "platform"]):
-            reply = (
-                "🚀 **SalesBot AI Core Capabilities & Features**:\n\n"
-                "1. **Automated BANT Lead Qualification**: Scores inbound prospects (0-100) on Budget, Need, Authority, and Timeline.\n"
-                "2. **24/7 Conversational AI Widget**: Embeddable website chat bubble for instant visitor engagement.\n"
-                "3. **1-Click Demo Meeting Booking**: Integrated sales calendar scheduling with zoom link generation.\n"
-                "4. **AI Outreach Email Generator**: Drafts personalized sales follow-up sequences in seconds.\n"
-                "5. **Real-time Pipeline Analytics**: Live conversion metrics, lead segmentation (Hot/Warm/Cold), and CRM database sync."
-            )
-            return reply, "features_inquiry", ["⚡ Book Demo", "💰 View Pricing Plans", "📊 Test BANT Scoring"], 15
-
-        # Integration & Embed inquiry
-        elif any(p in msg_lower for p in ["integrate", "integration", "api", "embed", "script", "website", "crm", "salesforce", "hubspot", "webhook"]):
-            reply = (
-                "🔌 **Seamless Integration & Website Embedding**:\n\n"
-                "• **1-Line Website Embed**: Copy `<script src='http://localhost:5173/widget.js'></script>` to deploy the chatbot on WordPress, Webflow, Shopify, or custom HTML.\n"
-                "• **REST API V1**: Full FastAPI endpoints (`/api/v1/bot/chat`, `/api/v1/leads`, `/api/v1/meetings`) for custom CRM sync.\n"
-                "• **Database Support**: Built-in SQLite/PostgreSQL synchronization with multi-turn session tracking."
-            )
-            return reply, "integration_inquiry", ["Get Embed Code", "Open Swagger Docs", "Book Demo"], 15
-
-        # Contact & Support inquiry
-        elif any(p in msg_lower for p in ["contact", "support", "help", "reach", "sales team", "human", "representative", "call"]):
-            reply = (
-                "📞 **Connect with Sales & Engineering Support**:\n\n"
-                "Our Solution Engineering team is ready to assist you:\n"
-                "• **Live Product Demo**: Book a 1-on-1 architecture call using our automated calendar.\n"
-                "• **Direct Support**: Email support@salesbot.ai or request an immediate call back.\n"
-                "• **Enterprise Consultation**: Custom SLA, dedicated Account Manager, and tailored workflow setup."
-            )
-            return reply, "contact_inquiry", ["Book 1-on-1 Demo", "Request Enterprise Quote"], 10
+            if not entities.location:
+                reply += "• Which location are you looking in?\n"
+            if not entities.budget_max:
+                reply += "• What is your approximate budget?\n"
+            if not entities.property_type and not entities.bhk:
+                reply += "• Are you looking for a Villa, Apartment, or Plot?\n"
+                
+            return reply, "requirement_gathering", ["Under 1 Cr", "3 BHK", "In Hyderabad"], 10
 
         # Greetings
-        elif any(p in msg_lower for p in ["hi", "hello", "hey", "greetings", "good morning", "good afternoon"]) and len(message.split()) <= 4:
+        if any(p in msg_lower for p in ["hi", "hello", "hey", "greetings"]) and len(message.split()) <= 4:
             reply = (
-                "Hello! 👋 I am your **SalesBot AI Assistant**.\n\n"
-                "I can answer product questions, calculate BANT lead scores, explain pricing, draft outreach emails, or book a live product demo for you.\n\n"
-                "What would you like to explore?"
+                "Hello! 👋 I am your AI Property Assistant.\n\n"
+                "I can help you discover available properties, compare options, and book site visits. What kind of property are you looking for today?"
             )
-            return reply, "greeting", ["⚡ Book Demo", "💰 View Pricing Plans", "📊 Calculate Lead Score"], 5
+            return reply, "greeting", ["Find 3 BHK", "Show Villas under 2 Cr", "Search in Gachibowli"], 5
 
-        # General open-ended query synthesis
-        else:
-            clean_text = re.sub(r'[^\w\s]', '', message)
-            words = [w.capitalize() for w in clean_text.split() if len(w) > 3 and w.lower() not in ["what", "how", "this", "that", "there", "have", "with", "from", "your", "they", "about", "could", "would", "tell", "show", "give"]]
-            topic = ", ".join(words[:3]) if words else "Sales Automation Intelligence"
-            reply = (
-                f"💡 **SalesBot AI Answer regarding '{topic}'**:\n\n"
-                f"SalesBot AI provides comprehensive sales automation designed to accelerate inbound lead conversions:\n\n"
-                f"• **Instant Discovery**: Visitors get instant answers to pricing, product specs, and architecture questions 24/7.\n"
-                f"• **Smart Scoring**: Every interaction is evaluated against your BANT criteria to qualify Hot Leads.\n"
-                f"• **Automated Booking**: High-intent prospects can select a demo slot directly in the chat, generating instant calendar invites.\n\n"
-                f"Would you like to test BANT lead scoring or book a live 1-on-1 demo call?"
-            )
-            return reply, "general_inquiry", ["⚡ Book Demo", "💰 View Pricing Plans", "📊 Calculate Lead Score"], 10
+        reply = (
+            "I can help you find the perfect property. Tell me a bit about what you are looking for—like your preferred location, budget, or whether you want an apartment or a villa."
+        )
+        return reply, "general_inquiry", ["Find 3 BHK", "Show Villas", "Search in Gachibowli"], 5
 
     @classmethod
     def process_chat(cls, req: BotChatRequest, db: Session) -> BotChatResponse:
         session_id = req.session_id or f"session_{uuid.uuid4().hex[:12]}"
         msg = req.message.strip()
 
-        # 1. Fetch recent session history for context
         history_records = db.query(Conversation).filter(
             Conversation.session_id == session_id
         ).order_by(Conversation.timestamp.asc()).all()
@@ -348,79 +245,78 @@ class SalesBotService:
             for h in history_records
         ]
 
-        # 2. Extract entities
         entities = cls.extract_entities(msg)
-        msg_lower = msg.lower()
+        
+        # Search properties in DB
+        query = db.query(Property).filter(Property.status == "AVAILABLE")
+        if entities.location:
+            query = query.filter(Property.location.ilike(f"%{entities.location}%"))
+        if entities.property_type:
+            query = query.filter(Property.property_type.ilike(f"%{entities.property_type}%"))
+        if entities.bhk:
+            query = query.filter(Property.bhk == entities.bhk)
+        if entities.budget_max:
+            # allow properties up to the budget
+            query = query.filter(Property.price <= entities.budget_max)
+            
+        matching_properties = query.limit(5).all()
+        
+        prop_context = ""
+        for p in matching_properties:
+            price_str = f"Rs. {p.price / 10000000} Cr" if p.price >= 10000000 else f"Rs. {p.price / 100000} Lakhs"
+            prop_context += f"- {p.name}: {p.bhk} BHK {p.property_type} in {p.location}. Price: {price_str}. Amenities: {p.amenities}\n"
 
-        # Check for direct booking action trigger
-        is_booking_action = any(p in msg_lower for p in ["morning slot", "afternoon slot", "book morning", "book afternoon", "confirm demo", "confirm slot"]) or ("slot" in msg_lower and ("morning" in msg_lower or "afternoon" in msg_lower))
-
-        if is_booking_action:
-            reply, intent, suggested_actions, score_change = cls.synthesize_conversational_response(
-                msg, entities, len(history_records)
-            )
+        llm_reply = cls.call_external_llm(msg, formatted_history, req.context or {}, prop_context)
+        
+        if llm_reply:
+            reply = llm_reply
+            intent = "llm_generated"
+            suggested_actions = ["Schedule Site Visit", "Compare Options", "Modify Search"]
+            score_change = 10
         else:
-            # 3. Attempt External LLM first (Groq / Gemini / OpenAI)
-            llm_reply = cls.call_external_llm(msg, formatted_history, req.context or {})
-            if llm_reply:
-                reply = llm_reply
-                intent = "llm_generated"
-                suggested_actions = ["Schedule Demo", "Calculate BANT Score", "View Pricing Plans"]
-                score_change = 10
-            else:
-                # Fall back to zero-failure conversational engine
-                reply, intent, suggested_actions, score_change = cls.synthesize_conversational_response(
-                    msg, entities, len(history_records)
-                )
+            reply, intent, suggested_actions, score_change = cls.synthesize_conversational_response(
+                msg, entities, len(history_records), matching_properties
+            )
 
-        # 4. Handle Lead Synchronization
         lead_obj: Optional[Lead] = None
         try:
             if req.lead_id:
                 lead_obj = db.query(Lead).filter(Lead.id == req.lead_id).first()
-            elif entities.email:
-                lead_obj = db.query(Lead).filter(Lead.email == entities.email).first()
+            elif entities.email or entities.phone:
+                if entities.email:
+                    lead_obj = db.query(Lead).filter(Lead.email == entities.email).first()
+                elif entities.phone:
+                    lead_obj = db.query(Lead).filter(Lead.phone == entities.phone).first()
+                    
                 if not lead_obj:
-                    # Automatically create captured lead!
                     lead_obj = Lead(
-                        name=entities.name or "Inbound Prospect",
-                        email=entities.email,
+                        name=entities.name or "Website Visitor",
+                        email=entities.email or f"{uuid.uuid4().hex[:8]}@unknown.com",
                         phone=entities.phone,
-                        company=entities.company or "Enterprise Account",
-                        status="Contacted",
+                        location_preference=entities.location,
+                        property_type_preference=entities.property_type,
+                        bhk_preference=entities.bhk,
+                        budget_max=entities.budget_max,
+                        status="New",
                         score=60,
                         category="Warm",
-                        notes=f"Auto-captured via SalesBot API in session {session_id}"
+                        notes=f"Auto-captured via AI Assistant in session {session_id}"
                     )
                     db.add(lead_obj)
                     db.commit()
                     db.refresh(lead_obj)
+                else:
+                    # Update preferences if found
+                    if entities.location: lead_obj.location_preference = entities.location
+                    if entities.property_type: lead_obj.property_type_preference = entities.property_type
+                    if entities.bhk: lead_obj.bhk_preference = entities.bhk
+                    if entities.budget_max: lead_obj.budget_max = entities.budget_max
+                    db.commit()
         except Exception as le:
             db.rollback()
             print(f"Notice: Lead synchronization exception: {le}")
 
-        # 5. Handle Automatic Meeting Creation if intent is demo_booked
-        if intent == "demo_booked":
-            try:
-                meeting_date = datetime.now(timezone.utc) + timedelta(days=1, hours=4)
-                lead_name = lead_obj.name if lead_obj else (entities.name or "Inbound Prospect")
-                lead_id_val = lead_obj.id if lead_obj else None
-                meeting = Meeting(
-                    lead_id=lead_id_val,
-                    lead_name=lead_name,
-                    title="Sales AI Demo & Architecture Review",
-                    meeting_date=meeting_date,
-                    duration_minutes=30,
-                    status="Scheduled",
-                    notes=f"Booked via SalesBot API chat. Session: {session_id}"
-                )
-                db.add(meeting)
-                db.commit()
-            except Exception as me:
-                db.rollback()
-                print(f"Notice: Meeting scheduling exception: {me}")
-
-        # 6. Save Turn to Database
+        # Save Turn to Database
         try:
             user_turn = Conversation(
                 session_id=session_id,
@@ -465,31 +361,41 @@ class SalesBotService:
             suggested_actions=suggested_actions,
             lead=lead_sync,
             score_change=score_change,
+            properties=[
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "price": p.price,
+                    "location": p.location,
+                    "property_type": p.property_type,
+                    "bhk": p.bhk,
+                    "amenities": p.amenities
+                } for p in matching_properties
+            ] if matching_properties else None,
             timestamp=datetime.now(timezone.utc)
         )
 
     @classmethod
     def qualify_prospect(cls, req: BotQualifyRequest, db: Session) -> BotQualifyResponse:
-        # BANT weights: Budget 25%, Need 30%, Authority 20%, Timeline 25%
-        score = int(
-            (req.budget * 0.25) +
-            (req.need * 0.30) +
-            (req.authority * 0.20) +
-            (req.timeline * 0.25)
-        )
+        # Simple qualification based on provided constraints
+        score = 50
+        if req.location_preference: score += 10
+        if req.budget_max: score += 20
+        if req.bhk_preference or req.property_type_preference: score += 10
+        if req.phone or req.email: score += 10
+
         score = max(0, min(100, score))
 
-        if score >= 71:
+        if score >= 70:
             category = "Hot"
-            rec = "Priority direct sales rep outreach and immediate 1-on-1 demo scheduling."
-        elif score >= 41:
+            rec = "Priority site visit scheduling."
+        elif score >= 50:
             category = "Warm"
-            rec = "Nurture with automated case studies and offer live webinar demo."
+            rec = "Nurture and share property brochures."
         else:
             category = "Cold"
-            rec = "Keep on quarterly marketing drip list."
+            rec = "Keep on mailing list."
 
-        # Upsert lead in database
         lead = db.query(Lead).filter(Lead.email == req.email).first()
         created = False
         if not lead:
@@ -497,11 +403,13 @@ class SalesBotService:
                 name=req.name,
                 email=req.email,
                 phone=req.phone,
-                company=req.company,
-                budget=req.budget,
-                need=req.need,
-                authority=req.authority,
-                timeline=req.timeline,
+                location_preference=req.location_preference,
+                property_type_preference=req.property_type_preference,
+                bhk_preference=req.bhk_preference,
+                budget_min=req.budget_min,
+                budget_max=req.budget_max,
+                purpose=req.purpose,
+                buying_timeline=req.buying_timeline,
                 score=score,
                 category=category,
                 status="Qualified" if category == "Hot" else "Contacted",
@@ -511,14 +419,12 @@ class SalesBotService:
             created = True
         else:
             lead.name = req.name
-            lead.budget = req.budget
-            lead.need = req.need
-            lead.authority = req.authority
-            lead.timeline = req.timeline
+            if req.location_preference: lead.location_preference = req.location_preference
+            if req.property_type_preference: lead.property_type_preference = req.property_type_preference
+            if req.bhk_preference: lead.bhk_preference = req.bhk_preference
+            if req.budget_max: lead.budget_max = req.budget_max
             lead.score = score
             lead.category = category
-            if req.company:
-                lead.company = req.company
             if req.notes:
                 lead.notes = req.notes
 
@@ -530,11 +436,11 @@ class SalesBotService:
             name=lead.name,
             score=score,
             category=category,
-            bant_breakdown={
-                "budget": req.budget,
-                "need": req.need,
-                "authority": req.authority,
-                "timeline": req.timeline
+            requirements_breakdown={
+                "location": req.location_preference,
+                "property_type": req.property_type_preference,
+                "bhk": req.bhk_preference,
+                "budget_max": req.budget_max
             },
             recommended_action=rec,
             created_or_updated=created
@@ -545,7 +451,6 @@ class SalesBotService:
         if req.meeting_date:
             date_val = req.meeting_date
         else:
-            # Default to tomorrow
             add_hours = 4 if req.slot == "afternoon" else 1
             date_val = datetime.now(timezone.utc) + timedelta(days=1, hours=add_hours)
 
@@ -554,9 +459,9 @@ class SalesBotService:
             lead_name=req.lead_name,
             title=req.title,
             meeting_date=date_val,
-            duration_minutes=30,
+            duration_minutes=60,
             status="Scheduled",
-            notes=req.notes or f"Booked via SalesBot API ({req.slot} slot)"
+            notes=req.notes or f"Site Visit Booked via AI Assistant ({req.slot} slot)"
         )
         db.add(meeting)
         db.commit()

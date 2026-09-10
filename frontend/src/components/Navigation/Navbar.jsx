@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Sparkles,
   LayoutDashboard, 
@@ -10,7 +10,9 @@ import {
   Code,
   LogIn,
   LogOut,
-  User
+  User,
+  Menu,
+  X
 } from 'lucide-react';
 
 export function Navbar({ 
@@ -32,6 +34,8 @@ export function Navbar({
     { id: 'meetings', label: 'Meetings', icon: Calendar, isPublic: false },
   ];
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const navItems = allNavItems.filter(item => {
     if (currentUser && currentUser.isLoggedIn) return true;
     return item.isPublic;
@@ -43,6 +47,7 @@ export function Navbar({
   };
 
   return (
+    <>
     <header style={{ 
       position: 'sticky', 
       top: 0, 
@@ -54,7 +59,7 @@ export function Navbar({
       borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
       boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
     }}>
-      <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+      <div className="md-nav-scroll" style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
         
         {/* Left: Brand Logo & Title */}
         <div 
@@ -86,8 +91,23 @@ export function Navbar({
           </div>
         </div>
 
-        {/* Middle: Horizontal Nav Items */}
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        {/* Hamburger Menu Button (Mobile Only) */}
+        <button 
+          className="mobile-only"
+          onClick={() => setIsMobileMenuOpen(true)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#ffffff',
+            cursor: 'pointer',
+            padding: '4px'
+          }}
+        >
+          <Menu size={24} />
+        </button>
+
+        {/* Middle: Horizontal Nav Items (Desktop Only) */}
+        <nav className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '4px', maxWidth: '100%' }}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -117,8 +137,8 @@ export function Navbar({
           })}
         </nav>
 
-        {/* Right: CTA Buttons & User Profile */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* Right: CTA Buttons & User Profile (Desktop Only) */}
+        <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '10px', maxWidth: '100%' }}>
           {currentUser && currentUser.isLoggedIn && (
             <>
               <button 
@@ -248,6 +268,105 @@ export function Navbar({
 
       </div>
     </header>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(6, 12, 23, 0.98)',
+          zIndex: 200,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '24px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontWeight: '900', fontSize: '1.25rem', color: '#ffffff' }}>
+                SalesBot <span style={{ color: '#ffd700' }}>AI</span>
+              </span>
+            </div>
+            <button 
+              onClick={() => setIsMobileMenuOpen(false)}
+              style={{ background: 'transparent', border: 'none', color: '#ffffff', cursor: 'pointer' }}
+            >
+              <X size={28} />
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    fontSize: '1.1rem',
+                    fontWeight: '700',
+                    color: isActive ? '#ffffff' : '#94a3b8',
+                    background: isActive ? 'rgba(0, 114, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                    border: 'none',
+                    textAlign: 'left'
+                  }}
+                >
+                  <Icon size={20} color={isActive ? '#38bdf8' : '#64748b'} />
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+            {currentUser && currentUser.isLoggedIn ? (
+              <>
+                <button 
+                  onClick={() => { onOpenLeadModal(); setIsMobileMenuOpen(false); }}
+                  className="btn btn-gold"
+                  style={{ width: '100%', padding: '14px', fontSize: '1rem', display: 'flex', justifyContent: 'center' }}
+                >
+                  <Plus size={18} /> Add Lead
+                </button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #0072ff, #00c6ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '800' }}>
+                      {getInitials(currentUser.name)}
+                    </div>
+                    <div>
+                      <div style={{ color: '#fff', fontWeight: '700', fontSize: '1rem' }}>{currentUser.name}</div>
+                      <div style={{ color: '#ffd700', fontSize: '0.8rem' }}>{currentUser.role}</div>
+                    </div>
+                  </div>
+                  <button onClick={() => { onLogout(); setIsMobileMenuOpen(false); }} style={{ background: 'transparent', border: 'none', color: '#f87171', padding: '8px' }}>
+                    <LogOut size={20} />
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={() => { onOpenLogin(); setIsMobileMenuOpen(false); }}
+                className="btn btn-gold"
+                style={{ width: '100%', padding: '14px', fontSize: '1rem', display: 'flex', justifyContent: 'center' }}
+              >
+                <LogIn size={18} /> Sign In
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

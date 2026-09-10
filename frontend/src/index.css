@@ -48,7 +48,7 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   background-color: var(--bg-dark);
   color: var(--text-primary);
   font-family: var(--font-main);
@@ -89,6 +89,7 @@ body::after {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 /* Scrollbar styling */
@@ -423,3 +424,112 @@ h1, h2, h3, h4, h5, h6 {
   color: #1e293b;
 }
 
+.mobile-only {
+  display: none !important;
+}
+
+/* =========================================
+   Responsive Utility Classes (Mobile)
+   ========================================= */
+@media (max-width: 768px) {
+  /* Layout Utilities */
+  .md-flex-col {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  .md-grid-1 {
+    grid-template-columns: 1fr !important;
+  }
+  .md-wrap {
+    flex-wrap: wrap !important;
+  }
+  .md-w-full {
+    width: 100% !important;
+  }
+  .md-max-w-full {
+    max-width: 100% !important;
+  }
+  .md-h-auto {
+    height: auto !important;
+  }
+
+  /* Spacing Utilities */
+  .md-p-4 {
+    padding: 16px !important;
+  }
+  .md-p-3 {
+    padding: 12px !important;
+  }
+  .md-p-2 {
+    padding: 8px !important;
+  }
+  .md-gap-3 {
+    gap: 12px !important;
+  }
+  .md-gap-2 {
+    gap: 8px !important;
+  }
+  .md-my-2 {
+    margin-top: 8px !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Typography Utilities */
+  .md-text-sm {
+    font-size: 0.875rem !important;
+  }
+  .md-text-base {
+    font-size: 1rem !important;
+  }
+  .md-text-lg {
+    font-size: 1.125rem !important;
+  }
+  .md-text-xl {
+    font-size: 1.25rem !important;
+  }
+  .md-text-2xl {
+    font-size: 1.5rem !important;
+  }
+  .md-text-center {
+    text-align: center !important;
+  }
+
+  /* Component specific overrides */
+  .md-modal-content {
+    width: 95% !important;
+    margin: 10px auto !important;
+    padding: 20px !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  .md-drawer-content {
+    width: 100% !important;
+  }
+
+  .md-table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    display: block;
+  }
+  
+  .md-hide, .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: flex !important;
+  }
+
+  .md-nav-scroll {
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    padding-bottom: 4px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .md-nav-scroll::-webkit-scrollbar {
+    display: none;
+  }
+}

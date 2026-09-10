@@ -3,5 +3,6 @@ from app.models.lead import Lead
 from app.models.conversation import Conversation
 from app.models.meeting import Meeting
 from app.models.analytics import AnalyticsMetric
+from app.models.property import Property
 
-__all__ = ["User", "Lead", "Conversation", "Meeting", "AnalyticsMetric"]
+__all__ = ["User", "Lead", "Conversation", "Meeting", "AnalyticsMetric", "Property"]

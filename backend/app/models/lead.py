@@ -14,11 +14,14 @@ class Lead(Base):
     score = Column(Integer, default=50)      # 0-100
     category = Column(String, default="Warm") # Cold, Warm, Hot
     
-    # BANT Scoring attributes (0-100 each)
-    budget = Column(Integer, default=50)
-    need = Column(Integer, default=50)
-    authority = Column(Integer, default=50)
-    timeline = Column(Integer, default=50)
+    # Real Estate Requirements
+    location_preference = Column(String, nullable=True)
+    property_type_preference = Column(String, nullable=True)
+    bhk_preference = Column(Integer, nullable=True)
+    budget_min = Column(Integer, nullable=True)
+    budget_max = Column(Integer, nullable=True)
+    purpose = Column(String, nullable=True)
+    buying_timeline = Column(String, nullable=True)
     
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

@@ -161,7 +161,7 @@ export function ImportCSVModal({ isOpen, onClose, onImportSuccess }) {
       }}
     >
       <div
-        className="glass-panel animate-scale-up"
+        className="glass-panel animate-scale-up md-modal-content"
         style={{
           width: '100%',
           maxWidth: '680px',
@@ -466,7 +466,7 @@ export function ImportCSVModal({ isOpen, onClose, onImportSuccess }) {
               borderTop: '1px solid #e2e8f0',
               background: '#f8fafc',
               display: 'flex',
-              justify: 'flex-end',
+              justifyContent: 'flex-end',
               gap: '12px'
             }}
           >

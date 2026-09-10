@@ -61,7 +61,7 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
       {/* Top Banner styled with SalesBot Logo Navy & Gold */}
-      <div className="glass-panel" style={{ 
+      <div className="glass-panel md-p-4" style={{ 
         padding: '28px', 
         background: 'linear-gradient(135deg, #0c192c 0%, #152a4a 100%)',
         color: '#ffffff',
@@ -128,10 +128,10 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
       </div>
 
       {/* Main Content Grid (Recent Leads & Activity Stream) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
+      <div className="md-grid-1" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
         
         {/* Top Hot Leads Section */}
-        <div className="glass-panel" style={{ padding: '24px' }}>
+        <div className="glass-panel md-p-4" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <div>
               <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)' }}>High Priority Qualified Leads</h3>
@@ -148,11 +148,13 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
             {sortedLeads.slice(0, 5).map((lead) => (
               <div 
                 key={lead.id} 
+                className="md-flex-col"
                 onClick={() => onSelectLead && onSelectLead(lead)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  gap: '12px',
                   padding: '14px 18px',
                   background: '#f8fafc',
                   borderRadius: '12px',
@@ -183,8 +185,8 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                  <span className={`badge badge-${lead.category.toLowerCase()}`} style={{ 
+                <div className="md-w-full" style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                  <span className={`badge badge-${lead.category.toLowerCase()} md-w-full`} style={{ 
                     padding: '7px 18px', 
                     fontSize: '0.82rem', 
                     minWidth: '210px', 
@@ -201,7 +203,7 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
         </div>
 
         {/* Live Activity & AI Insights Stream */}
-        <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="glass-panel md-p-4" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Sparkles size={20} color="#0072ff" />
             <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)' }}>Live AI Insights</h3>

@@ -263,7 +263,7 @@ export function App() {
       )}
 
       {/* Main Container */}
-      <main style={{ flex: 1, maxWidth: '1400px', width: '100%', margin: '0 auto', padding: '24px' }}>
+      <main className="md-p-3" style={{ flex: 1, maxWidth: '1400px', width: '100%', margin: '0 auto', padding: '24px', minWidth: 0 }}>
         
         {activeTab === 'landing' && (
           <LandingPage
