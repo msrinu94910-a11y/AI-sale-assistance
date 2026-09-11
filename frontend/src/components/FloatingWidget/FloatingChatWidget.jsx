@@ -32,8 +32,8 @@ export function FloatingChatWidget({ onLeadOrMeetingUpdated, onOpenEmbedModal })
       {
         id: 1,
         sender: 'bot',
-        message: '👋 Welcome! I am your **AI Sales Assistant**.\n\nI can calculate lead scores, explain pricing plans, or schedule a live 1-on-1 product demonstration for you.',
-        suggested_actions: ['⚡ Book Demo', '💰 View Pricing', '📊 Calculate Lead Score', '📧 Request Outreach Email'],
+        message: '👋 Welcome! I am your **Property Sales AI Assistant**.\n\nI can help you find available properties, explain details, or schedule a live site visit for you.',
+        suggested_actions: ['Find a Property', 'Properties under my budget', 'Compare Properties', 'Book a Site Visit'],
         timestamp: new Date().toISOString()
       }
     ];
@@ -72,8 +72,8 @@ export function FloatingChatWidget({ onLeadOrMeetingUpdated, onOpenEmbedModal })
         {
           id: Date.now(),
           sender: 'bot',
-          message: '👋 Hello! I am your AI Sales Assistant. How can I help scale your sales pipeline today?',
-          suggested_actions: ['⚡ Book Demo', '💰 View Pricing', '📊 Calculate Lead Score'],
+          message: '👋 Hello! I am your AI Property Sales Assistant. How can I help you find your dream property today?',
+          suggested_actions: ['Find a Property', 'Properties under my budget', 'Book a Site Visit'],
           timestamp: new Date().toISOString()
         }
       ];
@@ -124,8 +124,8 @@ export function FloatingChatWidget({ onLeadOrMeetingUpdated, onOpenEmbedModal })
         {
           id: Date.now() + 1,
           sender: 'bot',
-          message: 'I received your message! Would you like me to book a demo or answer pricing details?',
-          suggested_actions: ['⚡ Book Demo', '💰 View Pricing'],
+          message: 'I received your message! Would you like me to book a site visit or answer property details?',
+          suggested_actions: ['Find a Property', 'Book a Site Visit'],
           timestamp: new Date().toISOString()
         }
       ]);
@@ -229,12 +229,12 @@ export function FloatingChatWidget({ onLeadOrMeetingUpdated, onOpenEmbedModal })
               color: 'var(--text-secondary)'
             }}
           >
-            <span>✨ 24/7 AI Sales & Demo Booking</span>
+            <span>✨ 24/7 Property Recommendations & Site Visits</span>
             <button
               style={{ background: 'none', border: 'none', color: '#0072ff', fontWeight: '700', cursor: 'pointer', fontSize: '0.73rem' }}
-              onClick={() => handleSendMessage('⚡ Book Demo')}
+              onClick={() => handleSendMessage('Book a Site Visit')}
             >
-              Book 1-on-1 Demo →
+              Book Site Visit →
             </button>
           </div>
 
@@ -279,7 +279,7 @@ export function FloatingChatWidget({ onLeadOrMeetingUpdated, onOpenEmbedModal })
                   {/* Intent & Score Badge if present */}
                   {m.intent && m.intent === 'demo_booked' && (
                     <div style={{ marginTop: '8px', padding: '6px 10px', background: '#d1fae5', color: '#065f46', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <CheckCircle2 size={14} /> Demo Confirmed & Saved to Admin
+                      <CheckCircle2 size={14} /> Site Visit Confirmed & Saved
                     </div>
                   )}
                 </div>
@@ -329,7 +329,7 @@ export function FloatingChatWidget({ onLeadOrMeetingUpdated, onOpenEmbedModal })
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleSendMessage();
               }}
-              placeholder="Ask about features, pricing, or demos..."
+              placeholder="Ask about properties, locations, or budgets..."
               style={{
                 flex: 1,
                 border: '1px solid #cbd5e1',

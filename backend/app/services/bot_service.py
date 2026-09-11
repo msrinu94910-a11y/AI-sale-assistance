@@ -110,7 +110,7 @@ class SalesBotService:
         groq_key = context.get("groq_api_key") or settings.GROQ_API_KEY
         if groq_key:
             try:
-                groq_models = ["llama3-8b-8192", "mixtral-8x7b-32768", "gemma-7b-it"]
+                groq_models = [settings.GROQ_MODEL]
                 headers = {"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"}
                 
                 messages = [{"role": "system", "content": system_prompt}]
@@ -130,21 +130,36 @@ class SalesBotService:
                         if resp.status_code == 200:
                             data = resp.json()
                             return data["choices"][0]["message"]["content"]
-            except Exception:
-                pass
+                        else:
+                            print(f"Groq API Error {resp.status_code}: {resp.text}")
+            except Exception as e:
+                print(f"Groq API Exception: {e}")
 
         gemini_key = context.get("gemini_api_key") or settings.GEMINI_API_KEY
         if gemini_key:
             try:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
-                contents = [{"role": "user", "parts": [{"text": f"{system_prompt}\n\nUser Question: {message}"}]}]
+                
+                contents = []
+                for h in history[-4:]:
+                    role = "user" if h.get("role", "user") == "user" else "model"
+                    contents.append({"role": role, "parts": [{"text": h.get("content", "")}]})
+                
+                contents.append({"role": "user", "parts": [{"text": message}]})
+                
+                payload = {
+                    "systemInstruction": {"parts": [{"text": system_prompt}]},
+                    "contents": contents
+                }
                 with httpx.Client(timeout=6.0) as client:
-                    resp = client.post(url, json={"contents": contents})
+                    resp = client.post(url, json=payload)
                     if resp.status_code == 200:
                         data = resp.json()
                         return data["candidates"][0]["content"]["parts"][0]["text"]
-            except Exception:
-                pass
+                    else:
+                        print(f"Gemini API Error {resp.status_code}: {resp.text}")
+            except Exception as e:
+                print(f"Gemini API Exception: {e}")
 
         openai_key = context.get("openai_api_key") or settings.OPENAI_API_KEY
         if openai_key and openai_key.startswith("sk-"):
@@ -166,8 +181,10 @@ class SalesBotService:
                     resp = client.post(url, headers=headers, json=payload)
                     if resp.status_code == 200:
                         return resp.json()["choices"][0]["message"]["content"]
-            except Exception:
-                pass
+                    else:
+                        print(f"OpenAI API Error {resp.status_code}: {resp.text}")
+            except Exception as e:
+                print(f"OpenAI API Exception: {e}")
 
         return None
 

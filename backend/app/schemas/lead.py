@@ -16,6 +16,12 @@ class LeadBase(BaseModel):
     purpose: Optional[str] = None
     buying_timeline: Optional[str] = None
     notes: Optional[str] = None
+    
+    # BANT Scoring fields (Frontend expects these)
+    budget: Optional[int] = 50
+    need: Optional[int] = 50
+    authority: Optional[int] = 50
+    timeline: Optional[int] = 50
 
 class LeadCreate(LeadBase):
     pass

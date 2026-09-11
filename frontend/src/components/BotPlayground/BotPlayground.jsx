@@ -44,9 +44,9 @@ export function BotPlayground({ onLeadOrMeetingUpdated, onBack }) {
       {
         id: 1,
         sender: 'assistant',
-        text: "👋 Welcome to the **SalesBot AI Assistant Console**!\n\nI am configured with automated **BANT Lead Scoring**, **Entity Extraction**, and **1-Click Demo Booking**.\n\nTry sending a message like: *\"My name is Alex from Acme Corp, our budget is $50k and we want a demo tomorrow afternoon.\"*",
+        text: "👋 Welcome to the **Property Sales AI Assistant Console**!\n\nI am configured with **Real Estate Entity Extraction**, **Property Matching**, and **Site Visit Booking**.\n\nTry sending a message like: *\"I am looking for a 3 BHK villa in Hyderabad under 1.5 Crores. Can we schedule a site visit?\"*",
         intent: "welcome",
-        suggested_actions: ["Explain BANT Scoring", "View Pricing Plans", "Schedule Demo", "Qualify Inbound Lead"],
+        suggested_actions: ["Find a Property", "Properties under my budget", "Book a Site Visit", "Compare Properties"],
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     ]);
@@ -141,7 +141,7 @@ export function BotPlayground({ onLeadOrMeetingUpdated, onBack }) {
         sender: 'assistant',
         text: "Session reset. Started a new clean multi-turn conversation context.",
         intent: "system",
-        suggested_actions: ["Explain BANT Scoring", "View Pricing Plans", "Schedule Demo"],
+        suggested_actions: ["Find a Property", "Properties under my budget", "Book a Site Visit"],
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     ]);
@@ -326,8 +326,8 @@ export function BotPlayground({ onLeadOrMeetingUpdated, onBack }) {
                                 ₹{prop.price >= 10000000 ? `${(prop.price / 10000000).toFixed(2)} Cr` : `${(prop.price / 100000).toFixed(2)} Lakhs`}
                               </p>
                               <div style={{ display: 'flex', gap: '6px' }}>
-                                <button className="btn btn-primary" style={{ fontSize: '0.7rem', padding: '4px 8px', flex: 1 }}>Details</button>
-                                <button className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '4px 8px', flex: 1 }}>Compare</button>
+                                <button className="btn btn-primary" style={{ fontSize: '0.7rem', padding: '4px 8px', flex: 1 }} onClick={() => handleSend(`Tell me more about ${prop.name}`)}>Details</button>
+                                <button className="btn btn-secondary" style={{ fontSize: '0.7rem', padding: '4px 8px', flex: 1 }} onClick={() => handleSend(`How does ${prop.name} compare to the others?`)}>Compare</button>
                               </div>
                             </div>
                           ))}
@@ -500,30 +500,30 @@ export function BotPlayground({ onLeadOrMeetingUpdated, onBack }) {
                 <button
                   className="btn btn-secondary"
                   style={{ textAlign: 'left', fontSize: '0.78rem', padding: '8px 12px' }}
-                  onClick={() => handleSend("I am Marcus Vance from Apex Dynamics, email marcus@apexdynamics.com, budget $80k")}
+                  onClick={() => handleSend("I'm looking for a 3 BHK apartment in Gachibowli under 2 Crores")}
                 >
-                  📝 1. Capture Prospect Profile
+                  📝 1. Search Properties
                 </button>
                 <button
                   className="btn btn-secondary"
                   style={{ textAlign: 'left', fontSize: '0.78rem', padding: '8px 12px' }}
-                  onClick={() => handleSend("Explain how the BANT scoring weights work")}
+                  onClick={() => handleSend("What villas do you have available?")}
                 >
-                  🎯 2. Inquire BANT Algorithm
+                  🎯 2. Inquire Property Types
                 </button>
                 <button
                   className="btn btn-secondary"
                   style={{ textAlign: 'left', fontSize: '0.78rem', padding: '8px 12px' }}
-                  onClick={() => handleSend("What are the pricing plans for SalesBot AI?")}
+                  onClick={() => handleSend("Can you compare the properties you just suggested?")}
                 >
-                  💰 3. Request Pricing Breakdown
+                  💰 3. Compare Properties
                 </button>
                 <button
                   className="btn btn-secondary"
                   style={{ textAlign: 'left', fontSize: '0.78rem', padding: '8px 12px' }}
-                  onClick={() => handleSend("Please book the afternoon slot for our live product demo")}
+                  onClick={() => handleSend("I want to book a site visit for this weekend")}
                 >
-                  📅 4. Book Afternoon Demo Slot
+                  📅 4. Book Site Visit
                 </button>
               </div>
             </div>
