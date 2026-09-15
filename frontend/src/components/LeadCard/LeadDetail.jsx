@@ -45,7 +45,7 @@ export function LeadDetail({ lead, onClose, onScheduleDemo, onEditLead, onDelete
           <h2 style={{ fontSize: '1.4rem', color: 'var(--text-primary)' }}>{lead.name}</h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', marginTop: '4px' }}>
             <Building size={16} />
-            <span>{lead.company || 'Private Enterprise'}</span>
+            <span>{lead.location_preference || 'No Location specified'}</span>
           </div>
         </div>
 
@@ -63,26 +63,26 @@ export function LeadDetail({ lead, onClose, onScheduleDemo, onEditLead, onDelete
           )}
         </div>
 
-        {/* BANT Breakdown Sliders Display */}
+        {/* Property Preferences Display */}
         <div>
-          <h3 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '12px' }}>BANT Lead Qualification Scores</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[
-              { label: 'Budget (25%)', val: lead.budget || 50, color: '#e11d48' },
-              { label: 'Need (30%)', val: lead.need || 50, color: '#0284c7' },
-              { label: 'Authority (20%)', val: lead.authority || 50, color: '#7c3aed' },
-              { label: 'Timeline (25%)', val: lead.timeline || 50, color: '#059669' }
-            ].map((item, idx) => (
-              <div key={idx}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                  <span>{item.label}</span>
-                  <strong style={{ color: 'var(--text-primary)' }}>{item.val} / 100</strong>
-                </div>
-                <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div style={{ width: `${item.val}%`, height: '100%', background: item.color, borderRadius: '4px' }} />
-                </div>
-              </div>
-            ))}
+          <h3 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '12px' }}>Property Preferences</h3>
+          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.9rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Location:</span>
+              <strong style={{ color: 'var(--text-primary)' }}>{lead.location_preference || 'Any'}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Property Type:</span>
+              <strong style={{ color: 'var(--text-primary)' }}>{lead.property_type_preference || 'Any'}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>BHK:</span>
+              <strong style={{ color: 'var(--text-primary)' }}>{lead.bhk_preference || 'Any'}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Max Budget:</span>
+              <strong style={{ color: 'var(--text-primary)' }}>{lead.budget_max ? `₹${(lead.budget_max/100000).toFixed(1)} Lakhs` : 'Any'}</strong>
+            </div>
           </div>
         </div>
 
@@ -100,7 +100,7 @@ export function LeadDetail({ lead, onClose, onScheduleDemo, onEditLead, onDelete
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <button className="btn btn-primary" onClick={() => onScheduleDemo(lead)}>
             <Calendar size={18} />
-            <span>Schedule Demo for {lead.name}</span>
+            <span>Schedule Site Visit for {lead.name}</span>
           </button>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>

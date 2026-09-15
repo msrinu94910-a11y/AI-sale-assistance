@@ -79,18 +79,23 @@ export function ImportCSVModal({ isOpen, onClose, onImportSuccess }) {
             errs.push(`Row ${i + 1}: Missing Name or Email (Skipped)`);
           }
 
-          const budget = parseInt(rowObj['budget']) || 50;
-          const need = parseInt(rowObj['need']) || 50;
-          const authority = parseInt(rowObj['authority']) || 50;
-          const timeline = parseInt(rowObj['timeline']) || 50;
-          const score = Math.round(budget * 0.25 + need * 0.30 + authority * 0.20 + timeline * 0.25);
+          const location_preference = rowObj['location'] || rowObj['location preference'] || null;
+          const property_type_preference = rowObj['property type'] || rowObj['property_type'] || null;
+          const bhk_preference = parseInt(rowObj['bhk']) || null;
+          const budget_max = parseInt(rowObj['budget']) || parseInt(rowObj['budget max']) || null;
+
+          let score = 50;
+          if (location_preference) score += 10;
+          if (budget_max) score += 20;
+          if (bhk_preference || property_type_preference) score += 10;
+          if (rowObj['phone'] || email) score += 10;
           const category = score >= 71 ? 'Hot' : score >= 41 ? 'Warm' : 'Cold';
 
           parsed.push({
             rowIndex: i + 1,
             name: name || '(Missing Name)',
             email: email || '(Missing Email)',
-            company: rowObj['company'] || rowObj['organization'] || 'Enterprise',
+            location: location_preference || 'Any',
             phone: rowObj['phone'] || rowObj['phone number'] || '',
             status: rowObj['status'] || 'New',
             score,
@@ -293,7 +298,7 @@ export function ImportCSVModal({ isOpen, onClose, onImportSuccess }) {
                     Click to browse or drag and drop CSV file
                   </h4>
                   <p style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '4px' }}>
-                    Supports standard CSV files with Name, Email, Phone, Company, Status, and BANT metrics
+                    Supports standard CSV files with Name, Email, Phone, Status, and Property Preferences
                   </p>
                 </div>
               </div>
@@ -335,7 +340,7 @@ export function ImportCSVModal({ isOpen, onClose, onImportSuccess }) {
                     File Selected: <span style={{ color: '#0072ff' }}>{file.name}</span>
                   </h4>
                   <p style={{ fontSize: '0.82rem', color: '#64748b' }}>
-                    Previewing top prospect rows and automated BANT qualification status
+                    Previewing top prospect rows and automated Real Estate qualification status
                   </p>
                 </div>
                 <button
@@ -419,8 +424,8 @@ export function ImportCSVModal({ isOpen, onClose, onImportSuccess }) {
                       <th style={{ padding: '10px 12px' }}>Row</th>
                       <th style={{ padding: '10px 12px' }}>Name</th>
                       <th style={{ padding: '10px 12px' }}>Email</th>
-                      <th style={{ padding: '10px 12px' }}>Company</th>
-                      <th style={{ padding: '10px 12px' }}>BANT Score</th>
+                      <th style={{ padding: '10px 12px' }}>Location</th>
+                      <th style={{ padding: '10px 12px' }}>Score</th>
                       <th style={{ padding: '10px 12px' }}>Category</th>
                     </tr>
                   </thead>
@@ -440,7 +445,7 @@ export function ImportCSVModal({ isOpen, onClose, onImportSuccess }) {
                           {row.name}
                         </td>
                         <td style={{ padding: '10px 12px', color: '#475569' }}>{row.email}</td>
-                        <td style={{ padding: '10px 12px', color: '#64748b' }}>{row.company}</td>
+                        <td style={{ padding: '10px 12px', color: '#64748b' }}>{row.location}</td>
                         <td style={{ padding: '10px 12px', fontWeight: '700', color: '#0072ff' }}>
                           {row.score} / 100
                         </td>

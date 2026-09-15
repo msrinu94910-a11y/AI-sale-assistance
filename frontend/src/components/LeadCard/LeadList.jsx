@@ -8,7 +8,7 @@ export function LeadList({ leads, onSelectLead, onOpenLeadModal, onEditLead, onD
   const filteredLeads = leads.filter((lead) => {
     const matchesSearch = 
       lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (lead.company && lead.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (lead.location_preference && lead.location_preference.toLowerCase().includes(searchTerm.toLowerCase())) ||
       lead.email.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesCategory = 
@@ -137,7 +137,7 @@ export function LeadList({ leads, onSelectLead, onOpenLeadModal, onEditLead, onD
                 <h3 style={{ fontSize: '1.08rem', color: 'var(--text-primary)', fontWeight: '700' }}>{lead.name}</h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                   <Building size={14} />
-                  <span>{lead.company || 'Private Enterprise'}</span>
+                  <span>{lead.location_preference || 'No Location specified'}</span>
                 </div>
               </div>
 
@@ -160,13 +160,17 @@ export function LeadList({ leads, onSelectLead, onOpenLeadModal, onEditLead, onD
               )}
             </div>
 
-            {/* Micro-Bars */}
+            {/* Property Preferences */}
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-                <span>Budget ({lead.budget || 50}%)</span>
-                <span>Need ({lead.need || 50}%)</span>
-                <span>Authority ({lead.authority || 50}%)</span>
-                <span>Timeline ({lead.timeline || 50}%)</span>
+              <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span><strong style={{ color: 'var(--text-primary)' }}>Loc:</strong> {lead.location_preference || 'Any'}</span>
+                  <span><strong style={{ color: 'var(--text-primary)' }}>BHK:</strong> {lead.bhk_preference || 'Any'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                  <span><strong style={{ color: 'var(--text-primary)' }}>Type:</strong> {lead.property_type_preference || 'Any'}</span>
+                  <span><strong style={{ color: 'var(--text-primary)' }}>Max:</strong> {lead.budget_max ? `₹${(lead.budget_max/100000).toFixed(1)}L` : 'Any'}</span>
+                </div>
               </div>
               
               {/* Overall Lead Score Bar */}

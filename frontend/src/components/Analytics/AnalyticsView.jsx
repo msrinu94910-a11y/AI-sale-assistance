@@ -88,10 +88,10 @@ export function AnalyticsView({ summary, onBack }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[
-              { label: 'BANT Qualification Inquiries', pct: 45, color: '#2563eb' },
-              { label: 'Demo Scheduling Requests', pct: 30, color: '#0284c7' },
-              { label: 'Pricing & Enterprise Quote Questions', pct: 15, color: '#7c3aed' },
-              { label: 'General Product Inquiries', pct: 10, color: '#059669' }
+              { label: 'Property & Location Inquiries', pct: 45, color: '#2563eb' },
+              { label: 'Site Visit Scheduling Requests', pct: 30, color: '#0284c7' },
+              { label: 'Pricing & Layout Questions', pct: 15, color: '#7c3aed' },
+              { label: 'General Amenities Inquiries', pct: 10, color: '#059669' }
             ].map((item, idx) => (
               <div key={idx}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>

@@ -34,66 +34,66 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
   // Interactive AI Console Scenarios
   const [activeScenarioKey, setActiveScenarioKey] = useState('enterprise');
 
-  const scenarios = {
+    const scenarios = {
     enterprise: {
       key: 'enterprise',
-      label: '🔥 Enterprise Lead ($150k+)',
-      name: 'Sarah Connor',
-      role: 'VP of Sales Operations',
-      company: 'Cyberdyne Systems',
+      label: '🔥 Premium Buyer (₹2.5 Cr+)',
+      name: 'Ravi Kumar',
+      role: 'IT Director',
+      company: 'TCS',
       score: 92,
       category: '🔥 HOT LEAD (High Intent)',
       badgeClass: 'badge-hot',
       color: '#10b981',
-      userMessage: "We're looking to automate lead qualification for 50+ sales reps with a $150k ARR budget for Q3 deployment.",
-      botReply: "Welcome Sarah! Based on your enterprise timeline and budget capacity, I can immediately schedule an executive demo with our Solutions Director.",
+      userMessage: "I'm looking for a premium 4 BHK villa in Gachibowli with a budget of ₹3 Crores. We want to move in by Q3.",
+      botReply: "Welcome Ravi! Based on your preference for a 4 BHK villa in Gachibowli, I have matched 3 premium properties. I can immediately schedule a site visit with our senior property consultant.",
       entities: [
-        { label: 'Budget', val: '$150,000 ARR', color: '#10b981' },
-        { label: 'Authority', val: 'VP Decision Maker', color: '#ffd700' },
-        { label: 'Timeline', val: 'Q3 Immediate', color: '#ff9f00' }
+        { label: 'Location', val: 'Gachibowli', color: '#10b981' },
+        { label: 'Type', val: 'Villa (4 BHK)', color: '#ffd700' },
+        { label: 'Budget', val: '₹3 Cr', color: '#ff9f00' }
       ],
       bant: { budget: 95, need: 90, authority: 92, timeline: 90 },
-      actionLog: '✅ Google Calendar Link Generated • Demo Booked Tomorrow 10:00 AM'
+      actionLog: '✅ Google Calendar Link Generated • Site Visit Booked Tomorrow 10:00 AM'
     },
     midmarket: {
       key: 'midmarket',
-      label: '⚡ Mid-Market Buyer ($40k)',
-      name: 'David Miller',
-      role: 'Director of Growth',
-      company: 'Apex Logistics',
+      label: '⚡ Mid-Range Buyer (₹80L)',
+      name: 'Sneha Reddy',
+      role: 'Software Engineer',
+      company: 'Infosys',
       score: 68,
       category: '⚡ WARM LEAD (Nurture)',
       badgeClass: 'badge-warm',
       color: '#ff9f00',
-      userMessage: "We process around 5,000 web leads monthly and want to compare pricing tiers before Q4.",
-      botReply: "Hello David! SalesBot AI can easily handle your 5,000 monthly visitors. I have emailed our Mid-Market pricing matrix to your inbox.",
+      userMessage: "We are looking for a 3 BHK apartment in Kondapur, budget is around 85 Lakhs.",
+      botReply: "Hello Sneha! EstateBot AI has found several great 3 BHK apartments in Kondapur within your budget. I have emailed the property brochures to your inbox.",
       entities: [
-        { label: 'Budget', val: '$40,000 / yr', color: '#ff9f00' },
-        { label: 'Authority', val: 'Director Level', color: '#38bdf8' },
-        { label: 'Timeline', val: 'Q4 Planning', color: '#a855f7' }
+        { label: 'Location', val: 'Kondapur', color: '#ff9f00' },
+        { label: 'Type', val: 'Apartment (3 BHK)', color: '#38bdf8' },
+        { label: 'Budget', val: '₹85 Lakhs', color: '#a855f7' }
       ],
       bant: { budget: 65, need: 75, authority: 70, timeline: 60 },
-      actionLog: '📧 Nurture Sequence Triggered • Case Study Deck Dispatched'
+      actionLog: '📧 Nurture Sequence Triggered • Property Brochure Dispatched'
     },
     cold: {
       key: 'cold',
-      label: '❄️ Developer Inquiry',
-      name: 'Alex Chen',
-      role: 'Fullstack Engineer',
-      company: 'DevStudio Labs',
+      label: '❄️ Plot Inquiry',
+      name: 'Vikram Singh',
+      role: 'Business Owner',
+      company: 'Self-Employed',
       score: 35,
       category: '❄️ COLD LEAD (Self-Serve)',
       badgeClass: 'badge-cold',
       color: '#38bdf8',
-      userMessage: "Just exploring your REST API endpoints and webhooks for a personal side project.",
-      botReply: "Welcome Alex! You can check out our interactive API docs at /api/v1/bot/status. Let me know if you need sandbox credentials.",
+      userMessage: "Just exploring open plots for investment, no immediate plans to buy.",
+      botReply: "Welcome Vikram! You can check out our interactive map of available plots. Let me know if you need more details on investment returns.",
       entities: [
-        { label: 'Budget', val: 'Evaluation', color: '#94a3b8' },
-        { label: 'Authority', val: 'Individual Dev', color: '#94a3b8' },
-        { label: 'Timeline', val: 'No Urgency', color: '#94a3b8' }
+        { label: 'Location', val: 'Any', color: '#94a3b8' },
+        { label: 'Type', val: 'Plot', color: '#94a3b8' },
+        { label: 'Budget', val: 'Evaluating', color: '#94a3b8' }
       ],
       bant: { budget: 30, need: 40, authority: 35, timeline: 35 },
-      actionLog: '📖 Developer Portal Documentation Link Provided'
+      actionLog: '📖 Investment Guide Link Provided'
     }
   };
 
@@ -104,20 +104,20 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
 
   const faqs = [
     {
-      q: "How does SalesBot AI evaluate 100% of prospect interactions?",
-      a: "SalesBot AI replaces random manual chat sampling by analyzing 100% of inbound visitor conversations in real time across your website, evaluating budget capacity, authority, needs, and urgency automatically."
+      q: "How does EstateBot AI evaluate 100% of prospect interactions?",
+      a: "EstateBot AI replaces random manual chat sampling by analyzing 100% of inbound visitor conversations in real time across your website, evaluating location preference, budget capacity, property type, and BHK requirements automatically."
     },
     {
-      q: "Can I customize the BANT scoring weights for my company?",
-      a: "Yes! You can customize exact scoring thresholds for Budget, Authority level, Solution Need, and Timeline to reflect your company's specific ideal customer profile (ICP)."
+      q: "Can I customize the qualification scoring weights for my company?",
+      a: "Yes! You can customize exact scoring thresholds for Location, Budget, Property Type, and BHK to reflect your specific property inventory."
     },
     {
       q: "How does the 1-click website embed work?",
-      a: "Simply copy our single-line JavaScript snippet and paste it onto WordPress, Webflow, Shopify, React apps, or custom HTML. The intelligent AI sales assistant bubble goes live in under 60 seconds."
+      a: "Simply copy our single-line JavaScript snippet and paste it onto WordPress, Webflow, Shopify, React apps, or custom HTML. The intelligent AI real estate assistant bubble goes live in under 60 seconds."
     },
     {
       q: "What happens when a prospect qualifies as a Hot lead?",
-      a: "SalesBot AI instantly triggers automated calendar scheduling (Google Calendar/Zoom link) and syncs the prospect's qualified details directly into your lead pipeline database."
+      a: "EstateBot AI instantly triggers automated calendar scheduling (Google Calendar/Zoom link) for a site visit and syncs the prospect's qualified details directly into your real estate pipeline database."
     }
   ];
 
@@ -193,7 +193,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
             color: '#ffd700'
           }}>
             <Sparkles size={14} color="#ffd700" />
-            <span>SALESBOT AI 2.0 — AUTONOMOUS REVENUE ENGINE</span>
+            <span>ESTATEBOT AI 2.0 — REAL ESTATE SALES ENGINE</span>
           </div>
 
           {/* Headline with Serif Italic Emphasis */}
@@ -204,7 +204,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
             color: '#ffffff',
             letterSpacing: '-0.03em'
           }}>
-            Qualify Sales Prospects <br />
+            Qualify Property Leads <br />
             <span style={{ 
               fontFamily: 'Georgia, serif', 
               fontStyle: 'italic', 
@@ -224,7 +224,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
             lineHeight: 1.45,
             maxWidth: '520px'
           }}>
-            SalesBot AI engages website visitors 24/7, evaluates BANT lead criteria, and books calendar demos automatically.
+            EstateBot AI engages website visitors 24/7, evaluates property preferences, and books calendar site visits automatically.
           </p>
 
           {/* Dual CTAs (Vibrant Yellow + Outline) */}
@@ -306,7 +306,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
             Trusted by revenue leaders at high-growth enterprises
           </span>
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '28px', opacity: 0.85 }}>
-            {['Capgemini', 'Cyberdyne Systems', 'Oura Ring', 'ActiveCampaign', 'Apex Dynamics', 'QuantumScale'].map((b, i) => (
+            {['DLF', 'Prestige Group', 'Lodha', 'Godrej Properties', 'Sobha', 'Puravankara'].map((b, i) => (
               <span key={i} style={{ fontSize: '0.85rem', fontWeight: '800', color: '#cbd5e1', letterSpacing: '-0.01em' }}>
                 ✦ {b}
               </span>
@@ -334,10 +334,10 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
             <Flame size={13} color="#ff9f00" /> REVENUE OPERATING SYSTEM
           </div>
           <h2 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#1c1b18', letterSpacing: '-0.02em' }}>
-            Review <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontWeight: '400', color: '#0072ff' }}>100% of sales interactions</span> automatically
+            Review <span style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontWeight: '400', color: '#0072ff' }}>100% of property inquiries</span> automatically
           </h2>
           <p style={{ fontSize: '0.92rem', color: '#64748b', marginTop: '6px' }}>
-            Never miss a high-intent prospect. Replace random 2% chat sampling with full automated BANT scoring.
+            Never miss a high-intent prospect. Replace random 2% chat sampling with full automated property preference qualification.
           </p>
         </div>
 
@@ -374,10 +374,10 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
               <Zap size={20} color="#0072ff" />
             </div>
             <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#1c1b18' }}>
-              Precision BANT Lead Scoring
+              Precision Property Preferences
             </h3>
             <p style={{ fontSize: '0.86rem', color: '#64748b', lineHeight: 1.5 }}>
-              Evaluates Budget, Decision-Maker Authority, Business Need, and Urgency Timeline into a transparent 0-100 score matrix.
+              Evaluates Location, Budget, Property Type, and BHK requirements into a clear qualification score.
             </p>
           </div>
 
@@ -448,10 +448,10 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
               <Calendar size={20} color="#10b981" />
             </div>
             <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#1c1b18' }}>
-              Autonomous Calendar Demos
+              Autonomous Site Visits
             </h3>
             <p style={{ fontSize: '0.86rem', color: '#64748b', lineHeight: 1.5 }}>
-              High-intent leads scoring 71+ automatically receive Google Calendar & Zoom links for seamless demo scheduling.
+              High-intent leads scoring 71+ automatically receive Google Calendar links for seamless site visit scheduling.
             </p>
           </div>
 
@@ -465,7 +465,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
             PLATFORM CAPABILITIES
           </span>
           <h2 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#1c1b18', marginTop: '4px' }}>
-            All-in-One Sales Intelligence Platform
+            All-in-One Real Estate Intelligence Platform
           </h2>
         </div>
 
@@ -473,11 +473,11 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
           {[
             { title: 'Real-Time Lead Scoring', desc: 'Instant 0-100 qualification rating on every inbound message.', icon: Target, bg: '#e6f0ff', color: '#0072ff' },
             { title: '1-Click Embed Snippet', desc: 'Deploy on WordPress, Webflow, Shopify, or custom HTML in 60s.', icon: Code, bg: '#fff3d6', color: '#ff9f00' },
-            { title: 'AI Follow-Up Generator', desc: 'Drafts customized email sequences based on prospect pain points.', icon: Mail, bg: '#ffe5e5', color: '#ff3b30' },
-            { title: 'Multi-Turn Session Memory', desc: 'Extracts name, email, company, and timeline naturally.', icon: MessageSquare, bg: '#f3e8ff', color: '#8b5cf6' },
+            { title: 'AI Follow-Up Generator', desc: 'Drafts customized email sequences based on property preferences.', icon: Mail, bg: '#ffe5e5', color: '#ff3b30' },
+            { title: 'Multi-Turn Session Memory', desc: 'Extracts name, email, location, and budget naturally.', icon: MessageSquare, bg: '#f3e8ff', color: '#8b5cf6' },
             { title: 'High-Intent Alerting', desc: 'Flags hot enterprise opportunities immediately for sales reps.', icon: Flame, bg: '#ffe5e5', color: '#ff3b30' },
             { title: 'CRM & REST API Sync', desc: 'FastAPI endpoints (/api/v1/leads) to sync with any CRM.', icon: Layers, bg: '#e0f2fe', color: '#0369a1' },
-            { title: 'Autonomous Demo Booking', desc: 'Google Calendar & Zoom link generation inside live chat.', icon: Calendar, bg: '#d1fae5', color: '#10b981' },
+            { title: 'Autonomous Site Visit Booking', desc: 'Google Calendar link generation inside live chat.', icon: Calendar, bg: '#d1fae5', color: '#10b981' },
             { title: 'Pipeline Velocity Analytics', desc: 'Live metrics on lead volume, conversion rates, and revenue.', icon: TrendingUp, bg: '#e6f0ff', color: '#0072ff' },
             { title: 'Enterprise SOC2 Security', desc: 'Encrypted multi-tenant data storage and compliance safeguards.', icon: ShieldCheck, bg: '#fff3d6', color: '#ff9f00' }
           ].map((item, idx) => {
@@ -520,15 +520,15 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <span className="badge badge-gold" style={{ width: 'fit-content' }}>QUALIFICATION ENGINE</span>
             <h3 style={{ fontSize: '1.6rem', fontWeight: '900', color: '#1c1b18', letterSpacing: '-0.02em' }}>
-              Precision BANT Matrix Lead Qualification
+              Real Estate Preference Qualification
             </h3>
             <p style={{ fontSize: '0.88rem', color: '#64748b', lineHeight: 1.55 }}>
-              SalesBot AI analyzes visitor messages against your company's custom BANT parameters. Qualified prospects get scored from 0 to 100 with clear rationale.
+              EstateBot AI analyzes visitor messages against your company's custom property parameters. Qualified prospects get scored from 0 to 100 with clear rationale.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem', color: '#334155' }}><Check size={14} color="#10b981" /> Budget Allocation ($50k+ evaluation)</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem', color: '#334155' }}><Check size={14} color="#10b981" /> Decision-Maker Authority Level</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem', color: '#334155' }}><Check size={14} color="#10b981" /> Deployment Urgency Timeline</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem', color: '#334155' }}><Check size={14} color="#10b981" /> Budget Allocation (₹2.5 Cr+ premium)</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem', color: '#334155' }}><Check size={14} color="#10b981" /> Location and BHK Preferences</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem', color: '#334155' }}><Check size={14} color="#10b981" /> Property Type Constraints</div>
             </div>
           </div>
 
@@ -550,7 +550,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
               <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>Cyberdyne Systems • sarah@cyberdyne.io</div>
             </div>
             <div style={{ fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.45, background: 'rgba(16, 185, 129, 0.15)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-              ✅ Demo Booked: Tomorrow at 10:30 AM EST (Google Calendar Link Sent)
+              ✅ Site Visit Booked: Tomorrow at 10:30 AM IST (Calendar Link Sent)
             </div>
           </div>
         </div>
@@ -574,10 +574,10 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
               ⚡ LIVE REVENUE TELEMETRY
             </span>
             <h2 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#ffffff', margin: 0, letterSpacing: '-0.02em' }}>
-              Interactive AI Lead Qualification Console
+              Interactive Real Estate Qualification Console
             </h2>
             <p style={{ fontSize: '0.84rem', color: '#cbd5e1', margin: 0 }}>
-              Select a scenario below to watch SalesBot AI qualify prospects, extract BANT entities, and output real-time CRM actions.
+              Select a scenario below to watch EstateBot AI qualify prospects, extract property preferences, and output real-time CRM actions.
             </p>
           </div>
 
@@ -643,7 +643,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
                   {/* Bot Response */}
                   <div style={{ background: 'rgba(0, 114, 255, 0.18)', border: '1px solid rgba(0, 114, 255, 0.35)', padding: '10px 14px', borderRadius: '10px', fontSize: '0.82rem', color: '#ffffff', lineHeight: 1.45 }}>
                     <span style={{ fontWeight: '800', color: '#ffd700', fontSize: '0.74rem', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '3px' }}>
-                      🤖 SalesBot AI:
+                      🤖 EstateBot AI:
                     </span>
                     "{currentScenario.botReply}"
                   </div>
@@ -652,7 +652,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
 
               {/* Extracted Entity Badges */}
               <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#cbd5e1', width: '100%', marginBottom: '2px' }}>Real-Time Extracted BANT Entities:</span>
+                <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#cbd5e1', width: '100%', marginBottom: '2px' }}>Real-Time Extracted Preferences:</span>
                 {currentScenario.entities.map((e, idx) => (
                   <span key={idx} style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.74rem', color: e.color, fontWeight: '800', border: '1px solid rgba(255, 255, 255, 0.15)' }}>
                     {e.label}: <strong style={{ color: '#ffffff' }}>{e.val}</strong>
@@ -677,7 +677,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
               <div>
                 {/* Score Summary Row */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '10px', marginBottom: '12px' }}>
-                  <span style={{ fontSize: '0.74rem', fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.06em' }}>BANT Qualification Telemetry</span>
+                  <span style={{ fontSize: '0.74rem', fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Property Qualification Telemetry</span>
                   <span className={`badge ${currentScenario.badgeClass}`} style={{ fontSize: '0.74rem', padding: '4px 10px', fontWeight: '800' }}>
                     {currentScenario.category}
                   </span>
@@ -709,13 +709,13 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
                   </button>
                 </div>
 
-                {/* BANT Breakdown Progress Bars */}
+                {/* Property Preference Progress Bars */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {[
-                    { label: 'Budget Capacity', val: currentScenario.bant.budget, color: '#10b981' },
-                    { label: 'Need Alignment', val: currentScenario.bant.need, color: '#ff9f00' },
-                    { label: 'Decision Authority', val: currentScenario.bant.authority, color: '#a855f7' },
-                    { label: 'Urgency Timeline', val: currentScenario.bant.timeline, color: '#38bdf8' }
+                    { label: 'Budget Alignment', val: currentScenario.bant.budget, color: '#10b981' },
+                    { label: 'Location Match', val: currentScenario.bant.need, color: '#ff9f00' },
+                    { label: 'Property Type Fit', val: currentScenario.bant.authority, color: '#a855f7' },
+                    { label: 'BHK Match', val: currentScenario.bant.timeline, color: '#38bdf8' }
                   ].map((b, idx) => (
                     <div key={idx}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#ffffff', fontWeight: '700', marginBottom: '3px' }}>
@@ -759,11 +759,11 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
         }}>
           <div style={{ fontSize: '2.5rem', lineHeight: 0.8, color: '#ffd700', fontFamily: 'Georgia, serif' }}>“</div>
           <p style={{ fontSize: '1.05rem', color: '#1c1b18', fontWeight: '600', lineHeight: 1.5, maxWidth: '680px' }}>
-            "SalesBot AI completely transformed our inbound lead qualification. We review 100% of website visitors instantly, and our conversion to qualified demos lifted by 42.8% in the first month."
+            "EstateBot AI completely transformed our inbound lead qualification. We review 100% of website visitors instantly, and our conversion to qualified site visits lifted by 42.8% in the first month."
           </p>
           <div>
             <div style={{ fontSize: '0.9rem', fontWeight: '800', color: '#1c1b18' }}>Marcus Vance</div>
-            <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>VP of Revenue Operations • Apex Dynamics</div>
+            <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>VP of Sales • Prestige Group</div>
           </div>
         </div>
       </section>
@@ -827,7 +827,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
           Ready to scale your sales pipeline with AI?
         </h2>
         <p style={{ fontSize: '0.95rem', color: '#332900', maxWidth: '580px', margin: 0, lineHeight: 1.5, fontWeight: '600' }}>
-          Join market-leading CX and sales teams using SalesBot AI to score BANT leads and book demos 24/7.
+          Join market-leading real estate teams using EstateBot AI to qualify property leads and book site visits 24/7.
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px', marginTop: '4px' }}>
           <button
@@ -868,11 +868,11 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
               <span style={{ fontWeight: '900', fontSize: '1.15rem', color: '#ffffff' }}>
-                SalesBot <span style={{ color: '#ffd700' }}>AI</span>
+                EstateBot <span style={{ color: '#ffd700' }}>AI</span>
               </span>
             </div>
             <p style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-              Autonomous BANT Lead Qualification & Revenue Operations Platform.
+              Autonomous Real Estate Lead Qualification & Sales Operations Platform.
             </p>
           </div>
 
@@ -889,7 +889,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
           <div>
             <div style={{ fontSize: '0.82rem', fontWeight: '800', color: '#ffd700', marginBottom: '8px' }}>Solutions</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.78rem', color: '#cbd5e1' }}>
-              <span>B2B Enterprise Sales</span>
+              <span>Real Estate Sales</span>
               <span>Inbound Qualification</span>
               <span>CRM & API Sync</span>
               <span>CX Team Automation</span>
@@ -919,7 +919,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
           flexWrap: 'wrap',
           gap: '10px'
         }}>
-          <div>© 2026 SalesBot AI Inc. All rights reserved.</div>
+          <div>© 2026 EstateBot AI Inc. All rights reserved.</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', fontWeight: '700' }}>
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981' }} />
             All Systems Operational

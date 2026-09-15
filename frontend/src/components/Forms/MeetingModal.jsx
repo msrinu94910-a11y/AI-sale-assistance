@@ -11,11 +11,12 @@ export function MeetingModal({
   existingMeetings = [] 
 }) {
   const [formData, setFormData] = useState({
-    lead_name: selectedLead ? `${selectedLead.name} (${selectedLead.company || 'Enterprise'})` : '',
-    title: 'Product Demo & Architecture Review',
+    lead_name: selectedLead ? `${selectedLead.name} (${selectedLead.company || 'Individual'})` : '',
+    title: 'Property Site Visit',
     meeting_date: new Date(Date.now() + 86400000).toISOString().slice(0, 16),
     duration_minutes: 30,
-    notes: 'Covering AI lead scoring integration and custom workflow automation.'
+    meeting_type: 'Site Visit',
+    notes: 'Viewing the property and discussing buyer requirements.'
   });
 
   const [availableSlots, setAvailableSlots] = useState([]);
@@ -49,15 +50,17 @@ export function MeetingModal({
         title: meetingToEdit.title || '',
         meeting_date: formattedDate,
         duration_minutes: meetingToEdit.duration_minutes || 30,
+        meeting_type: meetingToEdit.meeting_type || 'Site Visit',
         notes: meetingToEdit.notes || ''
       });
     } else {
       setFormData({
-        lead_name: selectedLead ? `${selectedLead.name} (${selectedLead.company || 'Enterprise'})` : '',
-        title: 'Product Demo & Architecture Review',
+        lead_name: selectedLead ? `${selectedLead.name} (${selectedLead.company || 'Individual'})` : '',
+        title: 'Property Site Visit',
         meeting_date: new Date(Date.now() + 86400000).toISOString().slice(0, 16),
         duration_minutes: 30,
-        notes: 'Covering AI lead scoring integration and custom workflow automation.'
+        meeting_type: 'Site Visit',
+        notes: 'Viewing the property and discussing buyer requirements.'
       });
     }
   }, [isOpen, meetingToEdit, selectedLead]);
@@ -186,10 +189,10 @@ export function MeetingModal({
             </div>
             <div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
-                {meetingToEdit ? 'Edit Meeting & Product Demo' : 'Schedule Demo & Meeting'}
+                {meetingToEdit ? 'Edit Meeting' : 'Schedule Meeting'}
               </h3>
               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-                AI-Assisted Conflict Detection & Slot Booking
+                Site Visit or Video Call
               </span>
             </div>
           </div>
@@ -244,16 +247,92 @@ export function MeetingModal({
           
           <div>
             <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: '700' }}>
-              Lead / Participant *
+              Buyer / Participant *
             </label>
             <input
               type="text"
               required
-              placeholder="e.g. Sarah Connor (Cyberdyne Systems)"
+              placeholder="e.g. John Doe"
               value={formData.lead_name}
               onChange={(e) => setFormData({ ...formData, lead_name: e.target.value })}
               style={{ width: '100%', padding: '10px 14px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '10px', color: 'var(--text-primary)', outline: 'none', fontSize: '0.88rem' }}
             />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: '700' }}>
+              Meeting Type *
+            </label>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <label style={{
+                flex: 1,
+                padding: '10px',
+                border: formData.meeting_type === 'Site Visit' ? '2px solid #0072ff' : '1px solid #cbd5e1',
+                borderRadius: '10px',
+                background: formData.meeting_type === 'Site Visit' ? '#eff6ff' : '#f8fafc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontWeight: '600',
+                fontSize: '0.88rem'
+              }}>
+                <input 
+                  type="radio" 
+                  name="meeting_type" 
+                  value="Site Visit" 
+                  checked={formData.meeting_type === 'Site Visit'} 
+                  onChange={(e) => {
+                    setFormData({ 
+                      ...formData, 
+                      meeting_type: e.target.value,
+                      title: 'Property Site Visit' 
+                    });
+                  }} 
+                  style={{ display: 'none' }} 
+                />
+                <span style={{ 
+                  width: '16px', height: '16px', borderRadius: '50%', 
+                  border: formData.meeting_type === 'Site Visit' ? '4px solid #0072ff' : '1px solid #94a3b8',
+                  background: '#fff' 
+                }}></span>
+                Site Visit (In-Person)
+              </label>
+              <label style={{
+                flex: 1,
+                padding: '10px',
+                border: formData.meeting_type === 'Video Call' ? '2px solid #0072ff' : '1px solid #cbd5e1',
+                borderRadius: '10px',
+                background: formData.meeting_type === 'Video Call' ? '#eff6ff' : '#f8fafc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontWeight: '600',
+                fontSize: '0.88rem'
+              }}>
+                <input 
+                  type="radio" 
+                  name="meeting_type" 
+                  value="Video Call" 
+                  checked={formData.meeting_type === 'Video Call'} 
+                  onChange={(e) => {
+                    setFormData({ 
+                      ...formData, 
+                      meeting_type: e.target.value,
+                      title: 'Online Video Call'
+                    });
+                  }} 
+                  style={{ display: 'none' }} 
+                />
+                <span style={{ 
+                  width: '16px', height: '16px', borderRadius: '50%', 
+                  border: formData.meeting_type === 'Video Call' ? '4px solid #0072ff' : '1px solid #94a3b8',
+                  background: '#fff' 
+                }}></span>
+                Video Call (Online)
+              </label>
+            </div>
           </div>
 
           <div>

@@ -40,7 +40,7 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
       bgColor: '#d1fae5'
     },
     {
-      title: 'Demos & Meetings',
+      title: 'Site Visits Scheduled',
       value: summary?.meetings_scheduled || 14,
       change: '4 upcoming today',
       icon: Calendar,
@@ -48,7 +48,7 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
       bgColor: '#fff3d6'
     },
     {
-      title: 'Pipeline Revenue Value',
+      title: 'Potential Revenue',
       value: `$${((summary?.pipeline_value || 145000) / 1000).toFixed(1)}k`,
       change: 'Weighted pipeline',
       icon: DollarSign,
@@ -79,10 +79,10 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
               <span style={{ fontSize: '0.8rem', color: '#9fb3c8' }}>Updated 2 minutes ago</span>
             </div>
             <h1 style={{ fontSize: '1.75rem', color: '#ffffff', marginBottom: '6px' }}>
-              Sales Pipeline & Lead Intelligence Dashboard
+              Real Estate AI Sales Assistant Dashboard
             </h1>
             <p style={{ color: '#bcccdc', maxWidth: '650px', fontSize: '0.95rem' }}>
-              Real-time BANT lead qualification, pipeline velocity metrics, and automated demo scheduling.
+              Real-time property preference qualification and automated site visit scheduling.
             </p>
           </div>
 
@@ -135,7 +135,7 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <div>
               <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)' }}>High Priority Qualified Leads</h3>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Ranked by AI BANT Lead Score</p>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Ranked by AI Qualification Score</p>
             </div>
             {currentUser && currentUser.isLoggedIn && (
               <button className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} onClick={() => setActiveTab('leads')}>
@@ -181,7 +181,11 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
                   </div>
                   <div>
                     <h4 style={{ fontSize: '0.98rem', color: 'var(--text-primary)' }}>{lead.name}</h4>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{lead.company} • {lead.email}</span>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                      {lead.property_type_preference ? `${lead.property_type_preference}` : 'Any Type'} 
+                      {lead.bhk_preference ? ` • ${lead.bhk_preference} BHK` : ''} 
+                      {lead.location_preference ? ` in ${lead.location_preference}` : ''}
+                    </span>
                   </div>
                 </div>
 
@@ -232,7 +236,7 @@ export function DashboardView({ summary, leads, setActiveTab, onOpenLeadModal, o
             <div style={{ padding: '14px', background: '#fff3d6', borderRadius: '12px', border: '1px solid #ffe099' }}>
               <div style={{ fontSize: '0.82rem', fontWeight: '800', color: '#b36b00', marginBottom: '4px' }}>💡 AI Recommendation</div>
               <p style={{ fontSize: '0.78rem', color: '#804d00' }}>
-                3 warm leads are ready for demo scheduling. Trigger the AI follow-up assistant to increase conversion velocity.
+                3 warm leads are ready for site visit scheduling. Trigger the AI follow-up assistant to increase conversion velocity.
               </p>
             </div>
           </div>

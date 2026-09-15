@@ -8,6 +8,7 @@ class MeetingBase(BaseModel):
     title: str
     meeting_date: datetime
     duration_minutes: Optional[int] = 30
+    meeting_type: Optional[str] = "Site Visit"
     notes: Optional[str] = None
     status: Optional[str] = "Scheduled"
 
@@ -20,6 +21,7 @@ class MeetingUpdate(BaseModel):
     title: Optional[str] = None
     meeting_date: Optional[datetime] = None
     duration_minutes: Optional[int] = None
+    meeting_type: Optional[str] = None
     notes: Optional[str] = None
     status: Optional[str] = None
 

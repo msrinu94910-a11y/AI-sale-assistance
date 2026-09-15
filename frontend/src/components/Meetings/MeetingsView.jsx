@@ -46,14 +46,16 @@ export function MeetingsView({
     const start = new Date(meeting.meeting_date);
     const durationMs = (meeting.duration_minutes || 30) * 60 * 1000;
     const end = new Date(start.getTime() + durationMs);
+    const isVideo = meeting.meeting_type === 'Video Call';
 
-    const title = encodeURIComponent(meeting.title || 'SalesBot Product Demo');
-    const details = encodeURIComponent(
-      `Sales Prospect: ${meeting.lead_name || 'Prospect'}\nNotes: ${meeting.notes || 'Automated BANT Lead Demo'}\nJoin Video Call: https://meet.jit.si/SalesBot-Demo-${meeting.id}`
-    );
+    const title = encodeURIComponent(meeting.title || (isVideo ? 'Online Video Call' : 'Property Site Visit'));
+    const detailsText = `Buyer: ${meeting.lead_name || 'Prospect'}\nNotes: ${meeting.notes || ''}` + 
+      (isVideo ? `\nJoin Video Call: https://meet.jit.si/SalesBot-Call-${meeting.id}` : '');
+    const details = encodeURIComponent(detailsText);
     const dates = `${formatGoogleCalendarDate(start)}/${formatGoogleCalendarDate(end)}`;
+    const location = isVideo ? 'Online+Video+Call' : 'Property+Site';
 
-    const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=Online+Video+Call`;
+    const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
     window.open(googleCalUrl, '_blank');
   };
 
@@ -62,6 +64,10 @@ export function MeetingsView({
     const start = new Date(meeting.meeting_date);
     const durationMs = (meeting.duration_minutes || 30) * 60 * 1000;
     const end = new Date(start.getTime() + durationMs);
+    const isVideo = meeting.meeting_type === 'Video Call';
+
+    const description = `Buyer: ${meeting.lead_name || 'Lead'}\\nNote: ${meeting.notes || ''}` + 
+      (isVideo ? `\\nVideo: https://meet.jit.si/SalesBot-Call-${meeting.id}` : '');
 
     const icsContent = [
       'BEGIN:VCALENDAR',
@@ -72,9 +78,9 @@ export function MeetingsView({
       `DTSTAMP:${formatGoogleCalendarDate(new Date())}`,
       `DTSTART:${formatGoogleCalendarDate(start)}`,
       `DTEND:${formatGoogleCalendarDate(end)}`,
-      `SUMMARY:${meeting.title || 'SalesBot Product Demo'}`,
-      `DESCRIPTION:Prospect: ${meeting.lead_name || 'Lead'}\\nNote: ${meeting.notes || ''}\\nVideo: https://meet.jit.si/SalesBot-Demo-${meeting.id}`,
-      'LOCATION:Online Video Room',
+      `SUMMARY:${meeting.title || (isVideo ? 'Online Video Call' : 'Property Site Visit')}`,
+      `DESCRIPTION:${description}`,
+      `LOCATION:${isVideo ? 'Online Video Room' : 'Property Site'}`,
       'STATUS:CONFIRMED',
       'END:VEVENT',
       'END:VCALENDAR'
@@ -182,9 +188,9 @@ export function MeetingsView({
           </button>
           <div>
             <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>Scheduled Meetings & Demos</span>
+              <span>Scheduled Meetings</span>
               <span className="badge badge-gold" style={{ fontSize: '0.75rem', padding: '4px 10px' }}>
-                {meetings.length} Total Demos
+                {meetings.length} Total
               </span>
             </h2>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0, marginTop: '2px' }}>
@@ -242,7 +248,7 @@ export function MeetingsView({
           </div>
 
           <button className="btn btn-gold" onClick={onOpenCreateMeeting}>
-            <Plus size={16} /> Book New Demo
+            <Plus size={16} /> Book New Meeting
           </button>
         </div>
       </div>
@@ -295,7 +301,7 @@ export function MeetingsView({
           <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.82rem', color: '#166534' }}>
             <Info size={16} color="#16a34a" />
             <span>
-              <strong>Tip:</strong> Click on any date cell or badge below to instantly view all prospect demo details, join video calls, or export calendar events!
+              <strong>Tip:</strong> Click on any date cell or badge below to instantly view all prospect meeting details, join video calls, or export calendar events!
             </span>
           </div>
 
@@ -378,7 +384,7 @@ export function MeetingsView({
 
                     {hasMeetings && (
                       <span className="badge badge-gold" style={{ fontSize: '0.68rem', padding: '3px 8px', fontWeight: '800', boxShadow: '0 2px 6px rgba(255,159,0,0.3)' }}>
-                        🔥 {dayMeetings.length} Demo{dayMeetings.length > 1 ? 's' : ''}
+                        🔥 {dayMeetings.length} Meeting{dayMeetings.length > 1 ? 's' : ''}
                       </span>
                     )}
                   </div>
@@ -430,7 +436,7 @@ export function MeetingsView({
                           gap: '4px'
                         }}
                       >
-                        <span>+ {dayMeetings.length - 2} more demos</span>
+                        <span>+ {dayMeetings.length - 2} more meetings</span>
                       </div>
                     )}
                   </div>
@@ -457,16 +463,16 @@ export function MeetingsView({
             <div>
               <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {selectedDate ? (
-                  <span>Demos Scheduled for {getReadableDateString(selectedDate)}</span>
+                  <span>Meetings Scheduled for {getReadableDateString(selectedDate)}</span>
                 ) : (
-                  <span>All Upcoming Scheduled Demos</span>
+                  <span>All Upcoming Scheduled Meetings</span>
                 )}
                 <span className="badge badge-gold" style={{ fontSize: '0.75rem', padding: '3px 10px' }}>
                   {filteredMeetings.length} Meeting{filteredMeetings.length !== 1 ? 's' : ''}
                 </span>
               </h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0, marginTop: '2px' }}>
-                {selectedDate ? 'Click "Clear Date Filter" to view all dates' : 'Select any date cell in the calendar above to inspect specific day demos'}
+                {selectedDate ? 'Click "Clear Date Filter" to view all dates' : 'Select any date cell in the calendar above to inspect specific day meetings'}
               </p>
             </div>
           </div>
@@ -486,8 +492,8 @@ export function MeetingsView({
         {filteredMeetings.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 20px', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
             <CalendarIcon size={36} color="#94a3b8" style={{ marginBottom: '8px' }} />
-            <h4 style={{ color: '#334155', fontSize: '1.05rem', margin: '4px 0' }}>No Demos Scheduled for this Date</h4>
-            <p style={{ color: '#64748b', fontSize: '0.82rem', margin: 0 }}>Click "Book New Demo" above to schedule a new product demo.</p>
+            <h4 style={{ color: '#334155', fontSize: '1.05rem', margin: '4px 0' }}>No Meetings Scheduled for this Date</h4>
+            <p style={{ color: '#64748b', fontSize: '0.82rem', margin: 0 }}>Click "Book New Meeting" above to schedule a new meeting.</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', marginTop: '8px' }}>
@@ -514,10 +520,15 @@ export function MeetingsView({
                   </div>
                 </div>
 
-                {/* Date Banner */}
+                {/* Date Banner & Meeting Type */}
                 <div style={{ fontSize: '0.82rem', fontWeight: '700', color: '#0f172a', background: '#eff6ff', padding: '10px 12px', borderRadius: '8px', border: '1px solid #bfdbfe', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <CalendarIcon size={16} color="#0072ff" />
                   <span>{new Date(m.meeting_date).toLocaleString([], { dateStyle: 'full', timeStyle: 'short' })}</span>
+                  <span style={{ margin: '0 4px', color: '#94a3b8' }}>|</span>
+                  <span style={{ color: m.meeting_type === 'Video Call' ? '#0072ff' : '#059669', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {m.meeting_type === 'Video Call' ? <Video size={14} /> : <CalendarIcon size={14} />}
+                    {m.meeting_type || 'Site Visit'}
+                  </span>
                 </div>
 
                 {m.notes && (
@@ -530,28 +541,30 @@ export function MeetingsView({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px', paddingTop: '10px', borderTop: '1px solid var(--border-color)' }}>
 
                   {/* Join Live Video Meeting Button */}
-                  <button
-                    onClick={() => window.open(`https://meet.jit.si/SalesBot-Demo-${m.id}`, '_blank')}
-                    style={{
-                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                      color: '#ffffff',
-                      border: 'none',
-                      padding: '9px 14px',
-                      borderRadius: '8px',
-                      fontSize: '0.82rem',
-                      fontWeight: '800',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
-                    }}
-                  >
-                    <Video size={15} />
-                    <span>Join Video Call Room</span>
-                    <ExternalLink size={12} />
-                  </button>
+                  {m.meeting_type === 'Video Call' && (
+                    <button
+                      onClick={() => window.open(`https://meet.jit.si/SalesBot-Call-${m.id}`, '_blank')}
+                      style={{
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '9px 14px',
+                        borderRadius: '8px',
+                        fontSize: '0.82rem',
+                        fontWeight: '800',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+                      }}
+                    >
+                      <Video size={15} />
+                      <span>Join Video Call Room</span>
+                      <ExternalLink size={12} />
+                    </button>
+                  )}
 
                   {/* Google Calendar & .ics Download Buttons Row */}
                   <div style={{ display: 'flex', gap: '8px' }}>

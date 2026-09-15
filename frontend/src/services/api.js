@@ -160,13 +160,13 @@ const DEFAULT_INITIAL_LEADS = [
     phone: "+1 555-0192",
     company: "Cyberdyne Systems",
     status: "Qualified",
-    budget: 90,
-    need: 85,
-    authority: 80,
-    timeline: 95,
+    location_preference: "Hyderabad",
+    property_type_preference: "Villa",
+    bhk_preference: 4,
+    budget_max: 20000000,
     score: 88,
     category: "Hot",
-    notes: "Looking for Enterprise AI CRM integration for 150+ reps.",
+    notes: "Looking for premium 4 BHK villa with immediate move-in.",
     created_at: "2026-08-28T10:30:00Z"
   },
   {
@@ -176,13 +176,13 @@ const DEFAULT_INITIAL_LEADS = [
     phone: "+1 555-0144",
     company: "Apex Dynamics",
     status: "Contacted",
-    budget: 70,
-    need: 65,
-    authority: 60,
-    timeline: 50,
+    location_preference: "Kondapur",
+    property_type_preference: "Apartment",
+    bhk_preference: 3,
+    budget_max: 12000000,
     score: 62,
     category: "Warm",
-    notes: "Interested in automated email follow-ups and lead scoring.",
+    notes: "Interested in high-rise apartments with amenities.",
     created_at: "2026-08-29T14:15:00Z"
   },
   {
@@ -192,13 +192,13 @@ const DEFAULT_INITIAL_LEADS = [
     phone: "+1 555-0188",
     company: "QuantumScale Tech",
     status: "Proposal",
-    budget: 95,
-    need: 90,
-    authority: 85,
-    timeline: 90,
+    location_preference: "Gachibowli",
+    property_type_preference: "Apartment",
+    bhk_preference: 3,
+    budget_max: 15000000,
     score: 91,
     category: "Hot",
-    notes: "Contract in final legal review for Q4 deployment.",
+    notes: "Requires loan assistance, but ready to finalize.",
     created_at: "2026-08-30T09:00:00Z"
   },
   {
@@ -208,13 +208,13 @@ const DEFAULT_INITIAL_LEADS = [
     phone: "+1 555-0122",
     company: "Horizon Cloud",
     status: "New",
-    budget: 30,
-    need: 40,
-    authority: 30,
-    timeline: 20,
+    location_preference: null,
+    property_type_preference: "Plot",
+    bhk_preference: null,
+    budget_max: 5000000,
     score: 31,
     category: "Cold",
-    notes: "Initial inquiry downloaded product whitepaper.",
+    notes: "Initial inquiry exploring plot investments.",
     created_at: "2026-09-01T16:45:00Z"
   }
 ];
@@ -224,21 +224,21 @@ const DEFAULT_INITIAL_MEETINGS = [
     id: 1,
     lead_id: 1,
     lead_name: "Sarah Connor (Cyberdyne Systems)",
-    title: "Enterprise CRM Architecture Review & Live Demo",
+    title: "Premium Villa Site Visit",
     meeting_date: new Date(Date.now() + 86400000).toISOString(),
-    duration_minutes: 45,
+    duration_minutes: 60,
     status: "Scheduled",
-    notes: "Focus on security compliance, SSO, and 150-user seat pricing."
+    notes: "Focus on gated community amenities and custom interior options."
   },
   {
     id: 2,
     lead_id: 3,
     lead_name: "Elena Rostova (QuantumScale Tech)",
-    title: "Contract Closing & Implementation Scope",
+    title: "Apartment Tour & Loan Discussion",
     meeting_date: new Date(Date.now() + 172800000).toISOString(),
-    duration_minutes: 30,
+    duration_minutes: 60,
     status: "Scheduled",
-    notes: "Final procurement sign-off meeting."
+    notes: "Final sign-off meeting at the property."
   }
 ];
 
@@ -284,12 +284,12 @@ export const apiService = {
     }
 
     if (!createdObj) {
-      const score = Math.round(
-        (leadData.budget || 50) * 0.25 +
-        (leadData.need || 50) * 0.30 +
-        (leadData.authority || 50) * 0.20 +
-        (leadData.timeline || 50) * 0.25
-      );
+      let score = 50;
+      if (leadData.location_preference) score += 10;
+      if (leadData.budget_max) score += 20;
+      if (leadData.bhk_preference || leadData.property_type_preference) score += 10;
+      if (leadData.phone || leadData.email) score += 10;
+      
       const category = score >= 71 ? 'Hot' : score >= 41 ? 'Warm' : 'Cold';
       createdObj = {
         id: Date.now(),
@@ -298,10 +298,10 @@ export const apiService = {
         phone: leadData.phone || '',
         company: leadData.company || 'Enterprise',
         status: leadData.status || 'New',
-        budget: leadData.budget || 50,
-        need: leadData.need || 50,
-        authority: leadData.authority || 50,
-        timeline: leadData.timeline || 50,
+        location_preference: leadData.location_preference || null,
+        property_type_preference: leadData.property_type_preference || null,
+        bhk_preference: leadData.bhk_preference || null,
+        budget_max: leadData.budget_max || null,
         score,
         category,
         notes: leadData.notes || '',
@@ -336,12 +336,12 @@ export const apiService = {
     }
 
     if (!updatedObj) {
-      const score = Math.round(
-        (leadData.budget || 50) * 0.25 +
-        (leadData.need || 50) * 0.30 +
-        (leadData.authority || 50) * 0.20 +
-        (leadData.timeline || 50) * 0.25
-      );
+      let score = 50;
+      if (leadData.location_preference) score += 10;
+      if (leadData.budget_max) score += 20;
+      if (leadData.bhk_preference || leadData.property_type_preference) score += 10;
+      if (leadData.phone || leadData.email) score += 10;
+
       const category = score >= 71 ? 'Hot' : score >= 41 ? 'Warm' : 'Cold';
       updatedObj = {
         id: leadId,
@@ -400,18 +400,17 @@ export const apiService = {
       leads = leads.filter(l => (l.category || '').toLowerCase() === category.toLowerCase());
     }
 
-    const headers = ['id', 'name', 'email', 'phone', 'company', 'status', 'budget', 'need', 'authority', 'timeline', 'score', 'category', 'notes', 'created_at'];
+    const headers = ['id', 'name', 'email', 'phone', 'status', 'location', 'property_type', 'bhk', 'budget_max', 'score', 'category', 'notes', 'created_at'];
     const rows = leads.map(l => [
       l.id || '',
       `"${(l.name || '').replace(/"/g, '""')}"`,
       `"${(l.email || '').replace(/"/g, '""')}"`,
       `"${(l.phone || '').replace(/"/g, '""')}"`,
-      `"${(l.company || '').replace(/"/g, '""')}"`,
       `"${(l.status || 'New').replace(/"/g, '""')}"`,
-      l.budget ?? 50,
-      l.need ?? 50,
-      l.authority ?? 50,
-      l.timeline ?? 50,
+      `"${(l.location_preference || '').replace(/"/g, '""')}"`,
+      `"${(l.property_type_preference || '').replace(/"/g, '""')}"`,
+      l.bhk_preference || '',
+      l.budget_max || '',
       l.score ?? 50,
       `"${(l.category || 'Warm').replace(/"/g, '""')}"`,
       `"${(l.notes || '').replace(/"/g, '""')}"`,
@@ -501,12 +500,17 @@ export const apiService = {
               continue;
             }
 
-            const budget = parseInt(rowObj['budget']) || 50;
-            const need = parseInt(rowObj['need']) || 50;
-            const authority = parseInt(rowObj['authority']) || 50;
-            const timeline = parseInt(rowObj['timeline']) || 50;
+            const location_preference = rowObj['location'] || rowObj['location preference'] || null;
+            const property_type_preference = rowObj['property type'] || rowObj['property_type'] || null;
+            const bhk_preference = parseInt(rowObj['bhk']) || null;
+            const budget_max = parseInt(rowObj['budget']) || parseInt(rowObj['budget max']) || null;
 
-            const score = Math.round(budget * 0.25 + need * 0.30 + authority * 0.20 + timeline * 0.25);
+            let score = 50;
+            if (location_preference) score += 10;
+            if (budget_max) score += 20;
+            if (bhk_preference || property_type_preference) score += 10;
+            if (rowObj['phone'] || email) score += 10;
+
             const category = score >= 71 ? 'Hot' : score >= 41 ? 'Warm' : 'Cold';
 
             const newLead = {
@@ -514,12 +518,11 @@ export const apiService = {
               name,
               email,
               phone: rowObj['phone'] || rowObj['phone number'] || '',
-              company: rowObj['company'] || rowObj['organization'] || 'Enterprise',
               status: rowObj['status'] || 'New',
-              budget,
-              need,
-              authority,
-              timeline,
+              location_preference,
+              property_type_preference,
+              bhk_preference,
+              budget_max,
               score,
               category,
               notes: rowObj['notes'] || '',
@@ -549,10 +552,10 @@ export const apiService = {
   },
 
   downloadSampleCSVTemplate() {
-    const csvContent = "Name,Email,Phone,Company,Status,Budget,Need,Authority,Timeline,Notes\n" +
-      "Samantha Reed,samantha@nexus.io,+1 555-0199,Nexus Global,New,85,80,75,90,Interested in AI CRM automation\n" +
-      "Gregory House,house@diagnostics.com,+1 555-0143,Princeton Labs,Contacted,60,65,70,50,Requested pricing matrix\n" +
-      "Clara Oswald,clara@tardis.org,+1 555-0177,Time Dynamics,Qualified,95,90,85,95,Urgent deployment required\n";
+    const csvContent = "Name,Email,Phone,Status,Location,Property Type,BHK,Budget Max,Notes\n" +
+      "Samantha Reed,samantha@nexus.io,+1 555-0199,New,Hyderabad,Villa,4,25000000,Interested in prime location\n" +
+      "Gregory House,house@diagnostics.com,+1 555-0143,Contacted,Kondapur,Apartment,3,15000000,Requested amenities list\n" +
+      "Clara Oswald,clara@tardis.org,+1 555-0177,Qualified,Gachibowli,Plot,,10000000,Urgent site visit requested\n";
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const downloadUrl = window.URL.createObjectURL(blob);
@@ -587,9 +590,9 @@ export const apiService = {
         pipeline_value: 145000.0,
         category_distribution: { Hot: hotCount, Warm: warmCount, Cold: coldCount },
         recent_activities: [
-          { time: "Just now", action: "Lead Qualified", detail: "Apex Dynamics marked as Hot Lead (Score: 88)" },
-          { time: "1 hour ago", action: "Meeting Scheduled", detail: "Demo booked with Acme Corp for tomorrow at 2 PM" },
-          { time: "3 hours ago", action: "AI Chat Qualification", detail: "Automated BANT qualification completed for Nexus Labs" }
+          { time: "Just now", action: "Lead Qualified", detail: "Property Inquiry marked as Hot Lead (Score: 88)" },
+          { time: "1 hour ago", action: "Site Visit Scheduled", detail: "Tour booked with Prospect for tomorrow at 2 PM" },
+          { time: "3 hours ago", action: "AI Chat Qualification", detail: "Automated Property Qualification completed for Nexus Labs" }
         ]
       };
     }
@@ -794,9 +797,9 @@ export const apiService = {
         ],
         features: [
           "Multi-turn Session Context",
-          "Automatic Entity Extraction (Name, Email, Phone, Company, Budget)",
-          "Automated BANT Lead Scoring",
-          "Calendar Demo Booking",
+          "Automatic Entity Extraction (Name, Email, Phone, Budget, Location, BHK)",
+          "Automated Real Estate Lead Scoring",
+          "Calendar Site Visit Booking",
           "Lead Database Synchronization"
         ]
       };
@@ -852,12 +855,12 @@ export const apiService = {
     } catch (err) {
       console.warn('Qualify API connection error, using local computation', err);
     }
-    const score = Math.round(
-      (qualifyData.budget || 50) * 0.25 +
-      (qualifyData.need || 50) * 0.30 +
-      (qualifyData.authority || 50) * 0.20 +
-      (qualifyData.timeline || 50) * 0.25
-    );
+    let score = 50;
+    if (qualifyData.location) score += 10;
+    if (qualifyData.budget) score += 20;
+    if (qualifyData.property_type) score += 10;
+    if (qualifyData.phone || qualifyData.email) score += 10;
+
     const category = score >= 71 ? 'Hot' : score >= 41 ? 'Warm' : 'Cold';
     return {
       lead_id: Date.now(),

@@ -352,6 +352,10 @@ export function FloatingChatWidget({ onLeadOrMeetingUpdated, onOpenEmbedModal })
                 flexShrink: 0
               }}
             >
+              <Send size={16} />
+            </button>
+          </div>
+
           <div style={{ textAlign: 'center', background: '#f8fafc', padding: '4px 0 6px 0', fontSize: '0.68rem', color: 'var(--text-muted)' }}>
             ⚡ Powered by <strong>Property Sales AI</strong> | Visitor Session ID: <code style={{ fontSize: '0.65rem' }}>{sessionId.substring(0, 16)}...</code>
           </div>

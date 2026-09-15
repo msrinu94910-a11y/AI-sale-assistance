@@ -6,12 +6,11 @@ export function LeadModal({ isOpen, onClose, onSubmit, leadToEdit = null }) {
     name: '',
     email: '',
     phone: '',
-    company: '',
     status: 'New',
-    budget: 50,
-    need: 50,
-    authority: 50,
-    timeline: 50,
+    location_preference: '',
+    property_type_preference: '',
+    bhk_preference: '',
+    budget_max: '',
     notes: ''
   });
 
@@ -21,12 +20,11 @@ export function LeadModal({ isOpen, onClose, onSubmit, leadToEdit = null }) {
         name: leadToEdit.name || '',
         email: leadToEdit.email || '',
         phone: leadToEdit.phone || '',
-        company: leadToEdit.company || '',
         status: leadToEdit.status || 'New',
-        budget: leadToEdit.budget ?? 50,
-        need: leadToEdit.need ?? 50,
-        authority: leadToEdit.authority ?? 50,
-        timeline: leadToEdit.timeline ?? 50,
+        location_preference: leadToEdit.location_preference || '',
+        property_type_preference: leadToEdit.property_type_preference || '',
+        bhk_preference: leadToEdit.bhk_preference || '',
+        budget_max: leadToEdit.budget_max || '',
         notes: leadToEdit.notes || ''
       });
     } else {
@@ -34,12 +32,11 @@ export function LeadModal({ isOpen, onClose, onSubmit, leadToEdit = null }) {
         name: '',
         email: '',
         phone: '',
-        company: '',
         status: 'New',
-        budget: 50,
-        need: 50,
-        authority: 50,
-        timeline: 50,
+        location_preference: '',
+        property_type_preference: '',
+        bhk_preference: '',
+        budget_max: '',
         notes: ''
       });
     }
@@ -47,29 +44,34 @@ export function LeadModal({ isOpen, onClose, onSubmit, leadToEdit = null }) {
 
   if (!isOpen) return null;
 
-  const score = Math.round(
-    (formData.budget * 0.25) +
-    (formData.need * 0.30) +
-    (formData.authority * 0.20) +
-    (formData.timeline * 0.25)
-  );
+  let score = 50;
+  if (formData.location_preference) score += 10;
+  if (formData.budget_max) score += 20;
+  if (formData.bhk_preference || formData.property_type_preference) score += 10;
+  if (formData.phone || formData.email) score += 10;
+
   const category = score >= 71 ? 'Hot' : score >= 41 ? 'Warm' : 'Cold';
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.name || !formData.email) return;
-    onSubmit(formData);
-    // Reset form after submission
+    
+    const parsedData = {
+      ...formData,
+      bhk_preference: formData.bhk_preference ? parseInt(formData.bhk_preference) : null,
+      budget_max: formData.budget_max ? parseInt(formData.budget_max) : null,
+    };
+    
+    onSubmit(parsedData);
     setFormData({
       name: '',
       email: '',
       phone: '',
-      company: '',
       status: 'New',
-      budget: 50,
-      need: 50,
-      authority: 50,
-      timeline: 50,
+      location_preference: '',
+      property_type_preference: '',
+      bhk_preference: '',
+      budget_max: '',
       notes: ''
     });
     onClose();
@@ -109,7 +111,7 @@ export function LeadModal({ isOpen, onClose, onSubmit, leadToEdit = null }) {
               <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', fontWeight: '800' }}>
                 {leadToEdit ? 'Edit Lead Details' : 'Add New Lead'}
               </h3>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Automated BANT Qualification Scoring</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Property Preference Qualification</span>
             </div>
           </div>
 
@@ -150,16 +152,6 @@ export function LeadModal({ isOpen, onClose, onSubmit, leadToEdit = null }) {
 
             <div className="md-grid-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: '700' }}>Company Name</label>
-                <input
-                  type="text"
-                  placeholder="Cyberdyne Systems"
-                  value={formData.company}
-                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', color: 'var(--text-primary)', outline: 'none', fontSize: '0.88rem' }}
-                />
-              </div>
-              <div>
                 <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: '700' }}>Phone Number</label>
                 <input
                   type="text"
@@ -169,12 +161,61 @@ export function LeadModal({ isOpen, onClose, onSubmit, leadToEdit = null }) {
                   style={{ width: '100%', padding: '10px 12px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', color: 'var(--text-primary)', outline: 'none', fontSize: '0.88rem' }}
                 />
               </div>
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: '700' }}>Location Preference</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Gachibowli"
+                  value={formData.location_preference}
+                  onChange={(e) => setFormData({ ...formData, location_preference: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', color: 'var(--text-primary)', outline: 'none', fontSize: '0.88rem' }}
+                />
+              </div>
+            </div>
+
+            {/* Property Preferences */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+              <div className="md-grid-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: '700' }}>Property Type</label>
+                  <select
+                    value={formData.property_type_preference}
+                    onChange={(e) => setFormData({ ...formData, property_type_preference: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', color: 'var(--text-primary)', outline: 'none', fontSize: '0.88rem' }}
+                  >
+                    <option value="">Any</option>
+                    <option value="Apartment">Apartment</option>
+                    <option value="Villa">Villa</option>
+                    <option value="Plot">Plot</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: '700' }}>BHK</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 3"
+                    value={formData.bhk_preference}
+                    onChange={(e) => setFormData({ ...formData, bhk_preference: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', color: 'var(--text-primary)', outline: 'none', fontSize: '0.88rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: '700' }}>Max Budget (₹)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 15000000"
+                    value={formData.budget_max}
+                    onChange={(e) => setFormData({ ...formData, budget_max: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', color: 'var(--text-primary)', outline: 'none', fontSize: '0.88rem' }}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Live Score Preview Banner */}
             <div style={{ background: '#e6f0ff', padding: '14px 18px', borderRadius: '12px', border: '1px solid #b8d5ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <span style={{ fontSize: '0.75rem', color: '#0052cc', fontWeight: '700' }}>Calculated BANT Lead Score</span>
+                <span style={{ fontSize: '0.75rem', color: '#0052cc', fontWeight: '700' }}>Calculated Qualification Score</span>
                 <div style={{ fontSize: '1.5rem', fontWeight: '900', color: '#003399' }}>{score} / 100</div>
               </div>
               <span className={`badge badge-${category.toLowerCase()}`} style={{ fontSize: '0.8rem', padding: '6px 14px' }}>
@@ -182,37 +223,12 @@ export function LeadModal({ isOpen, onClose, onSubmit, leadToEdit = null }) {
               </span>
             </div>
 
-            {/* BANT Sliders */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-              {[
-                { label: 'Budget Allocation (25%)', key: 'budget' },
-                { label: 'Need Alignment (30%)', key: 'need' },
-                { label: 'Decision Authority (20%)', key: 'authority' },
-                { label: 'Purchase Timeline Urgency (25%)', key: 'timeline' }
-              ].map((item) => (
-                <div key={item.key}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '2px', fontWeight: '700' }}>
-                    <span>{item.label}</span>
-                    <strong style={{ color: '#0072ff' }}>{formData[item.key]}%</strong>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={formData[item.key]}
-                    onChange={(e) => setFormData({ ...formData, [item.key]: parseInt(e.target.value) })}
-                    style={{ width: '100%', accentColor: '#0072ff', cursor: 'pointer' }}
-                  />
-                </div>
-              ))}
-            </div>
-
             {/* Notes */}
             <div>
-              <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: '700' }}>Lead Qualification Notes</label>
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', fontWeight: '700' }}>Lead Notes</label>
               <textarea
                 rows="2"
-                placeholder="Primary use case, tech stack requirements..."
+                placeholder="Specific requirements, amenities requested..."
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 style={{ width: '100%', padding: '10px 12px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', color: 'var(--text-primary)', outline: 'none', fontSize: '0.88rem' }}

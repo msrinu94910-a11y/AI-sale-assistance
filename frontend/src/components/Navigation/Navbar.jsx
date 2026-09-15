@@ -28,10 +28,10 @@ export function Navbar({
   const allNavItems = [
     { id: 'landing', label: 'Home', icon: Sparkles, isPublic: true },
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, isPublic: false },
-    { id: 'bot', label: 'Sales Bot API', icon: Bot, isPublic: false },
+    { id: 'bot', label: 'AI Chat API', icon: Bot, isPublic: false },
     { id: 'leads', label: 'Leads & Scoring', icon: Users, isPublic: false },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, isPublic: false },
-    { id: 'meetings', label: 'Meetings', icon: Calendar, isPublic: false },
+    { id: 'meetings', label: 'Site Visits', icon: Calendar, isPublic: false },
   ];
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

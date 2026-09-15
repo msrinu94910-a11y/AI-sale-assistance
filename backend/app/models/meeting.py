@@ -11,6 +11,7 @@ class Meeting(Base):
     title = Column(String, nullable=False)
     meeting_date = Column(DateTime, nullable=False)
     duration_minutes = Column(Integer, default=30)
+    meeting_type = Column(String, default="Site Visit") # Site Visit or Video Call
     status = Column(String, default="Scheduled") # Scheduled, Completed, Cancelled
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
