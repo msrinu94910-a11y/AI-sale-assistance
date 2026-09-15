@@ -52,6 +52,10 @@ class BotQualifyRequest(BaseModel):
     purpose: Optional[str] = None
     buying_timeline: Optional[str] = None
     notes: Optional[str] = None
+    budget: Optional[int] = 50
+    need: Optional[int] = 50
+    authority: Optional[int] = 50
+    timeline: Optional[int] = 50
 
 class BotQualifyResponse(BaseModel):
     lead_id: Optional[int] = None

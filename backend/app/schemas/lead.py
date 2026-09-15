@@ -40,6 +40,12 @@ class LeadUpdate(BaseModel):
     purpose: Optional[str] = None
     buying_timeline: Optional[str] = None
     notes: Optional[str] = None
+    
+    # BANT Scoring fields
+    budget: Optional[int] = None
+    need: Optional[int] = None
+    authority: Optional[int] = None
+    timeline: Optional[int] = None
 
 class LeadResponse(LeadBase):
     id: int

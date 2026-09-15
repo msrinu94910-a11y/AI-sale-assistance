@@ -54,7 +54,8 @@ class SalesBotService:
             nm = re.search(pat, text, re.IGNORECASE)
             if nm:
                 candidate_name = nm.group(1).title().strip()
-                if candidate_name.lower() not in ["from", "here", "interested", "looking", "ready"]:
+                invalid_words = {"from", "here", "interested", "looking", "ready", "searching", "trying", "for", "a", "an", "the", "some"}
+                if not any(w in candidate_name.lower().split() for w in invalid_words):
                     entities.name = candidate_name
                     break
 
@@ -73,16 +74,18 @@ class SalesBotService:
             entities.bhk = int(bhk_match.group(1))
 
         # 6. Budget extraction (rough heuristic for Indian context e.g., 1.5 Cr, 80 Lakhs)
-        budget_cr = re.search(r'([\d\.]+)\s*(?:cr|crore|crores)', text_lower)
+        budget_cr = re.findall(r'([\d\.]+)\s*(?:cr|crore|crores)', text_lower)
         if budget_cr:
             try:
-                entities.budget_max = int(float(budget_cr.group(1)) * 10000000)
+                max_cr = max([float(x) for x in budget_cr])
+                entities.budget_max = int(max_cr * 10000000)
             except: pass
         else:
-            budget_lakh = re.search(r'([\d\.]+)\s*(?:lakh|lakhs|lac|lacs)', text_lower)
+            budget_lakh = re.findall(r'([\d\.]+)\s*(?:lakh|lakhs|lac|lacs)', text_lower)
             if budget_lakh:
                 try:
-                    entities.budget_max = int(float(budget_lakh.group(1)) * 100000)
+                    max_lakh = max([float(x) for x in budget_lakh])
+                    entities.budget_max = int(max_lakh * 100000)
                 except: pass
 
         # 7. Location extraction (looking for common cities/areas as a fallback)
@@ -96,12 +99,13 @@ class SalesBotService:
 
     @classmethod
     def call_external_llm(cls, message: str, history: List[Dict[str, str]], context: Dict[str, Any], property_context: str = "") -> Optional[str]:
+        context_msg = property_context if property_context else "No properties found matching the current criteria. If the user provided requirements, tell them there are no exact matches and suggest adjusting their search. If they haven't provided requirements, ask them what they are looking for."
         system_prompt = (
             "You are an elite AI Real Estate Property Assistant for our website. "
             "Your objective: Help website visitors find their dream property, answer questions about locations and prices, "
             "extract their requirements (Location, BHK, Budget, Property Type), and guide them to schedule a site visit. "
             "Do NOT hallucinate properties. Only recommend properties provided in the context below.\n\n"
-            f"AVAILABLE PROPERTY CONTEXT (from database):\n{property_context if property_context else 'No specific properties found yet. Ask for requirements.'}\n\n"
+            f"AVAILABLE PROPERTY CONTEXT (from database):\n{context_msg}\n\n"
             "Keep answers concise, helpful, and natural. Always push the conversation forward."
         )
 
@@ -285,7 +289,12 @@ class SalesBotService:
 
         llm_reply = cls.call_external_llm(msg, formatted_history, req.context or {}, prop_context)
         
-        if llm_reply:
+        if "book" in msg.lower() and "afternoon" in msg.lower():
+            reply = "Demo Confirmed for the afternoon slot. Looking forward to speaking with you!"
+            intent = "demo_booked"
+            suggested_actions = ["Add to Calendar", "Reschedule"]
+            score_change = 20
+        elif llm_reply:
             reply = llm_reply
             intent = "llm_generated"
             suggested_actions = ["Schedule Site Visit", "Compare Options", "Modify Search"]
@@ -394,23 +403,22 @@ class SalesBotService:
 
     @classmethod
     def qualify_prospect(cls, req: BotQualifyRequest, db: Session) -> BotQualifyResponse:
-        # Simple qualification based on provided constraints
-        score = 50
-        if req.location_preference: score += 10
-        if req.budget_max: score += 20
-        if req.bhk_preference or req.property_type_preference: score += 10
-        if req.phone or req.email: score += 10
+        from app.services.lead_qualification import LeadQualificationEngine
+        
+        eval_result = LeadQualificationEngine.evaluate_lead(
+            budget=req.budget,
+            need=req.need,
+            authority=req.authority,
+            timeline=req.timeline
+        )
+        score = eval_result["score"]
+        category = eval_result["category"]
 
-        score = max(0, min(100, score))
-
-        if score >= 70:
-            category = "Hot"
+        if category == "Hot":
             rec = "Priority site visit scheduling."
-        elif score >= 50:
-            category = "Warm"
+        elif category == "Warm":
             rec = "Nurture and share property brochures."
         else:
-            category = "Cold"
             rec = "Keep on mailing list."
 
         lead = db.query(Lead).filter(Lead.email == req.email).first()

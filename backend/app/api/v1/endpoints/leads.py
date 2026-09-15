@@ -193,10 +193,17 @@ async def import_leads(file: UploadFile = File(...), db: Session = Depends(get_d
                 
         budget_max = parse_int(normalized_row.get('budget_max'))
         
-        # We don't have a LeadQualificationEngine scoring model for the new schema yet, 
-        # so just insert with default score.
-        score = 50
-        category = "Warm"
+        from app.services.lead_qualification import LeadQualificationEngine
+        b = parse_int(normalized_row.get('budget'))
+        n = parse_int(normalized_row.get('need'))
+        a = parse_int(normalized_row.get('authority'))
+        t = parse_int(normalized_row.get('timeline'))
+        
+        eval_result = LeadQualificationEngine.evaluate_lead(
+            budget=b, need=n, authority=a, timeline=t
+        )
+        score = eval_result["score"]
+        category = eval_result["category"]
         
         db_lead = Lead(
             name=name,
@@ -274,10 +281,10 @@ def update_lead(lead_id: int, lead_in: LeadUpdate, db: Session = Depends(get_db)
     
     # Recalculate BANT score
     eval_result = LeadQualificationEngine.evaluate_lead(
-        budget=lead.budget,
-        need=lead.need,
-        authority=lead.authority,
-        timeline=lead.timeline
+        budget=getattr(lead_in, "budget", 50),
+        need=getattr(lead_in, "need", 50),
+        authority=getattr(lead_in, "authority", 50),
+        timeline=getattr(lead_in, "timeline", 50)
     )
     lead.score = eval_result["score"]
     lead.category = eval_result["category"]
