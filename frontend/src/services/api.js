@@ -6,116 +6,90 @@ function synthesizeClientBotResponse(message, sessionId) {
   
   const emailMatch = message.match(/[\w.-]+@[\w.-]+\.\w+/);
   const email = emailMatch ? emailMatch[0].toLowerCase() : null;
-  const budgetMatch = message.match(/(\$\s?[\d,]+(?:\.\d+)?(?:k|m|b)?|\b[\d,]+(?:\.\d+)?\s*(?:k|thousand|million|usd|dollars)\b)/i);
+  const budgetMatch = message.match(/(\$\s?[\d,]+(?:\.\d+)?(?:k|m|b)?|\b[\d,]+(?:\.\d+)?\s*(?:k|thousand|million|usd|dollars|cr|crore|lakh)\b)/i);
   const budget = budgetMatch ? budgetMatch[0] : null;
   const nameMatch = message.match(/(?:my name is|i am|i'm|this is|call me)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
   const name = nameMatch ? nameMatch[1].trim() : null;
-  const companyMatch = message.match(/(?:at|from|with|company is|work at)\s+([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+)?)/i);
-  const company = companyMatch ? companyMatch[1].trim() : null;
 
   const extracted = {
     name,
     email,
-    company,
+    company: null,
     phone: null,
     budget,
-    timeline: null
+    timeline: null,
+    location: null,
+    property_type: null
   };
 
-  if (['morning slot', 'afternoon slot', 'book morning', 'book afternoon', 'confirm demo', 'confirm slot'].some(p => msgLower.includes(p)) || (msgLower.includes('slot') && (msgLower.includes('morning') || msgLower.includes('afternoon')))) {
-    const slotTime = msgLower.includes('afternoon') ? 'Tomorrow Afternoon at 2:00 PM EST' : 'Tomorrow Morning at 10:30 AM EST';
+  if (['morning', 'afternoon', 'book', 'schedule', 'visit', 'tour', 'confirm'].some(p => msgLower.includes(p)) && msgLower.includes('slot')) {
+    const slotTime = msgLower.includes('afternoon') ? 'Tomorrow Afternoon at 2:00 PM' : 'Tomorrow Morning at 10:30 AM';
     return {
-      reply: `✅ Demo Confirmed! Your personalized Product Demo & Architecture Review is booked for **${slotTime}**.\n\n• Calendar invitation and Zoom link generated.\n• Agenda: Automated BANT Lead Scoring, API integration, and custom workflow setup.\n• Our Solution Specialist will meet you directly on the call.`,
+      reply: `✅ Site Visit Confirmed! Your property tour is scheduled for **${slotTime}**.\n\n• Our sales agent will meet you at the property location.\n• You will receive a calendar invitation and location map shortly.\n• We look forward to showing you around!`,
       intent: 'demo_booked',
       session_id: session,
       extracted_entities: extracted,
-      suggested_actions: ['View Scheduled Meetings', 'Qualify Another Lead', 'Compare Plans'],
+      suggested_actions: ['View Scheduled Visits', 'Search More Properties', 'Contact Agent'],
       score_change: 30,
       timestamp: new Date().toISOString()
     };
   }
 
-  if (['demo', 'schedule', 'meeting', 'book', 'call', 'calendar', 'appointment'].some(p => msgLower.includes(p))) {
+  if (['visit', 'tour', 'see', 'schedule', 'meeting', 'book', 'appointment'].some(p => msgLower.includes(p))) {
     return {
-      reply: `I would love to set you up with a live 1-on-1 Product Demo & Architecture Review with our senior solutions engineer.\n\nWe have slots available this week. Which time works best for your schedule?\n• Morning Slot: Tomorrow at 10:30 AM EST\n• Afternoon Slot: Tomorrow at 2:00 PM EST`,
+      reply: `I would love to arrange a site visit for you to see our properties in person.\n\nWe have slots available this week. Which time works best for you?\n• Morning Slot: Tomorrow at 10:30 AM\n• Afternoon Slot: Tomorrow at 2:00 PM`,
       intent: 'demo_scheduling_prompt',
       session_id: session,
       extracted_entities: extracted,
-      suggested_actions: ['Book Morning Slot', 'Book Afternoon Slot', 'Open Demo Calendar'],
+      suggested_actions: ['Book Morning Slot', 'Book Afternoon Slot', 'Ask for Location'],
       score_change: 20,
       timestamp: new Date().toISOString()
     };
   }
 
-  if (['price', 'pricing', 'cost', 'plan', 'quote', 'tier', 'subscription'].some(p => msgLower.includes(p))) {
+  if (['price', 'pricing', 'cost', 'budget', 'crore', 'lakh'].some(p => msgLower.includes(p))) {
     return {
-      reply: `SalesBot AI offers flexible tiers designed for growing sales teams:\n\n1. Starter ($49 / user / month):\n   - Core BANT Lead Scoring Matrix\n   - Automated Lead Dashboard & Pipeline Tracking\n\n2. Professional ($99 / user / month):\n   - Conversational AI Assistant & 1-Click Calendar Booking\n   - Advanced Analytics & Automated Follow-up Sequences\n\n3. Enterprise (Custom Quote):\n   - Unlimited Seats, SSO, Dedicated SLA, and Custom REST API Integrations.`,
+      reply: `We have a wide range of properties to fit different budgets:\n\n1. Luxury Villas (₹2 Cr - ₹5 Cr+):\n   - Premium amenities, gated communities, private pools.\n\n2. Premium Apartments (₹80 Lakhs - ₹2 Cr):\n   - 2 BHK & 3 BHK options in prime locations.\n\n3. Residential Plots (₹50 Lakhs - ₹1.5 Cr):\n   - Great for investment or custom home building.\n\nWhat is your approximate budget?`,
       intent: 'pricing_inquiry',
       session_id: session,
       extracted_entities: extracted,
-      suggested_actions: ['Book Demo for Pricing', 'Request Enterprise Quote', 'Compare Features'],
+      suggested_actions: ['Under 1 Crore', '1 to 2 Crores', 'Above 2 Crores'],
       score_change: 15,
       timestamp: new Date().toISOString()
     };
   }
 
-  if (['bant', 'qualify', 'qualification', 'score', 'scoring', 'budget', 'authority', 'timeline'].some(p => msgLower.includes(p))) {
+  if (['amenities', 'facility', 'pool', 'gym', 'clubhouse', 'parking'].some(p => msgLower.includes(p))) {
     return {
-      reply: `Our automated BANT Qualification Engine scores prospects from 0 to 100:\n\n• Budget (25% weight): Purchasing capacity and investment readiness.\n• Need (30% weight): Business pain points and platform fit.\n• Authority (20% weight): Decision-maker level (C-level, VP, Manager).\n• Timeline (25% weight): Urgency to deploy within 30-90 days.\n\nLeads scoring 71+ are classified as 🔥 Hot Leads for immediate outreach.`,
-      intent: 'bant_explanation',
-      session_id: session,
-      extracted_entities: extracted,
-      suggested_actions: ['Calculate BANT Score', 'Filter Hot Leads', 'Add New Lead'],
-      score_change: 15,
-      timestamp: new Date().toISOString()
-    };
-  }
-
-  if (['email', 'outreach', 'draft', 'template', 'follow up'].some(p => msgLower.includes(p))) {
-    const prospect = name || 'Prospect';
-    const comp = company || 'your organization';
-    return {
-      reply: `Here is a customized outreach email draft for ${prospect}:\n\nSubject: Accelerating ${comp}'s Sales Pipeline with Automated AI Scoring\n\nHi ${prospect},\n\nI noticed your focus on scaling your sales pipeline. Teams using SalesBot AI have reduced lead qualification time by 60% with automated BANT scoring and calendar booking.\n\nWould Thursday at 2:00 PM or Friday at 10:30 AM work best for a quick chat?\n\nBest regards,\nSales Development Team`,
-      intent: 'email_draft',
-      session_id: session,
-      extracted_entities: extracted,
-      suggested_actions: ['Book Morning Slot', 'Book Afternoon Slot', 'View All Leads'],
-      score_change: 15,
-      timestamp: new Date().toISOString()
-    };
-  }
-
-  if (['feature', 'capabilities', 'what can you do', 'function', 'tool', 'how it works', 'overview', 'service', 'platform'].some(p => msgLower.includes(p))) {
-    return {
-      reply: `🚀 **SalesBot AI Core Capabilities & Features**:\n\n1. **Automated BANT Lead Qualification**: Scores inbound prospects (0-100) on Budget, Need, Authority, and Timeline.\n2. **24/7 Conversational AI Widget**: Embeddable website chat bubble for instant visitor engagement.\n3. **1-Click Demo Meeting Booking**: Integrated sales calendar scheduling with zoom link generation.\n4. **AI Outreach Email Generator**: Drafts personalized sales follow-up sequences in seconds.\n5. **Real-time Pipeline Analytics**: Live conversion metrics, lead segmentation (Hot/Warm/Cold), and CRM database sync.`,
+      reply: `Our premium properties come with world-class amenities, including:\n\n• Fully equipped Gym & Clubhouse\n• Swimming Pool & Kids Play Area\n• 24/7 Security & Power Backup\n• Dedicated Car Parking\n• Landscaped Gardens & Walking Tracks\n\nAre there any specific amenities you are looking for?`,
       intent: 'features_inquiry',
       session_id: session,
       extracted_entities: extracted,
-      suggested_actions: ['⚡ Book Demo', '💰 View Pricing Plans', '📊 Test BANT Scoring'],
+      suggested_actions: ['Find Apartments', 'Schedule Site Visit', 'Modify Requirements'],
       score_change: 15,
       timestamp: new Date().toISOString()
     };
   }
 
-  if (['integrate', 'integration', 'api', 'embed', 'script', 'website', 'crm', 'salesforce', 'hubspot', 'webhook'].some(p => msgLower.includes(p))) {
+  if (['location', 'where', 'area', 'city', 'gachibowli', 'kondapur'].some(p => msgLower.includes(p))) {
     return {
-      reply: `🔌 **Seamless Integration & Website Embedding**:\n\n• **1-Line Website Embed**: Copy \`<script src="http://localhost:5173/widget.js"></script>\` to deploy the chatbot on WordPress, Webflow, Shopify, or custom HTML.\n• **REST API V1**: Full FastAPI endpoints (\`/api/v1/bot/chat\`, \`/api/v1/leads\`, \`/api/v1/meetings\`) for custom CRM sync.\n• **Database Support**: Built-in SQLite/PostgreSQL synchronization with multi-turn session tracking.`,
-      intent: 'integration_inquiry',
+      reply: `📍 **Prime Locations Available**:\n\nWe have excellent properties in top areas including Gachibowli, Kondapur, Madhapur, Jubilee Hills, and Narsingi.\n\nEach location offers great connectivity, proximity to IT parks, and premium lifestyle conveniences.\n\nWhich area are you most interested in?`,
+      intent: 'location_inquiry',
       session_id: session,
       extracted_entities: extracted,
-      suggested_actions: ['Get Embed Code', 'Open Swagger Docs', 'Book Demo'],
+      suggested_actions: ['Gachibowli', 'Kondapur', 'Narsingi'],
       score_change: 15,
       timestamp: new Date().toISOString()
     };
   }
 
-  if (['contact', 'support', 'help', 'reach', 'sales team', 'human', 'representative', 'call'].some(p => msgLower.includes(p))) {
+  if (['contact', 'support', 'help', 'reach', 'agent', 'human', 'representative', 'call'].some(p => msgLower.includes(p))) {
     return {
-      reply: `📞 **Connect with Sales & Engineering Support**:\n\nOur Solution Engineering team is ready to assist you:\n• **Live Product Demo**: Book a 1-on-1 architecture call using our automated calendar.\n• **Direct Support**: Email support@salesbot.ai or request an immediate call back.\n• **Enterprise Consultation**: Custom SLA, dedicated Account Manager, and tailored workflow setup.`,
+      reply: `📞 **Connect with our Real Estate Agents**:\n\nOur team is ready to assist you:\n• **Site Visit**: Book a property tour using our calendar.\n• **Direct Support**: Email sales@propertyai.com or request an immediate call back.\n• **Office Visit**: Drop by our sales office for a detailed consultation.`,
       intent: 'contact_inquiry',
       session_id: session,
       extracted_entities: extracted,
-      suggested_actions: ['Book 1-on-1 Demo', 'Request Enterprise Quote'],
+      suggested_actions: ['Book Site Visit', 'Request Call Back'],
       score_change: 10,
       timestamp: new Date().toISOString()
     };
@@ -123,26 +97,22 @@ function synthesizeClientBotResponse(message, sessionId) {
 
   if (['hi', 'hello', 'hey', 'greetings', 'good morning', 'good afternoon'].some(p => msgLower.includes(p)) && message.split(' ').length <= 4) {
     return {
-      reply: `Hello! 👋 I am your **SalesBot AI Assistant**.\n\nI can answer product questions, calculate BANT lead scores, explain pricing, draft outreach emails, or book a live product demo for you.\n\nWhat would you like to explore?`,
+      reply: `Hello! 👋 I am your **Property Sales AI Assistant**.\n\nI can help you discover available properties, compare options, check prices, and book site visits.\n\nAre you looking for an apartment, villa, or plot today?`,
       intent: 'greeting',
       session_id: session,
       extracted_entities: extracted,
-      suggested_actions: ['⚡ Book Demo', '💰 View Pricing Plans', '📊 Calculate Lead Score'],
+      suggested_actions: ['Find Apartments', 'Find Villas', 'Search Properties'],
       score_change: 5,
       timestamp: new Date().toISOString()
     };
   }
 
-  const cleanText = message.replace(/[^\w\s]/gi, '');
-  const words = cleanText.split(' ').filter(w => w.length > 3 && !['what', 'how', 'this', 'that', 'there', 'have', 'with', 'from', 'your', 'they', 'about', 'could', 'would', 'tell', 'show', 'give'].includes(w.toLowerCase()));
-  const topic = words.slice(0, 3).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(', ') || 'Sales Automation';
-
   return {
-    reply: `💡 **SalesBot AI Answer regarding '${topic}'**:\n\nSalesBot AI provides comprehensive sales automation designed to accelerate inbound lead conversions:\n\n• **Instant Discovery**: Visitors get instant answers to pricing, product specs, and architecture questions 24/7.\n• **Smart Scoring**: Every interaction is evaluated against your BANT criteria to qualify Hot Leads.\n• **Automated Booking**: High-intent prospects can select a demo slot directly in the chat, generating instant calendar invites.\n\nWould you like to test BANT lead scoring or book a live 1-on-1 demo call?`,
+    reply: `💡 I can help you find your perfect home. Tell me a bit about what you are looking for—like your preferred location, budget, or whether you want an apartment or a villa.\n\nWe have listings across major areas. Would you like to schedule a site visit or browse properties?`,
     intent: 'general_inquiry',
     session_id: session,
     extracted_entities: extracted,
-    suggested_actions: ['⚡ Book Demo', '💰 View Pricing Plans', '📊 Calculate Lead Score'],
+    suggested_actions: ['Find 3 BHK', 'Show Villas', 'Book Site Visit'],
     score_change: 10,
     timestamp: new Date().toISOString()
   };
