@@ -383,8 +383,8 @@ export function MeetingsView({
                     </span>
 
                     {hasMeetings && (
-                      <span className="badge badge-gold" style={{ fontSize: '0.68rem', padding: '3px 8px', fontWeight: '800', boxShadow: '0 2px 6px rgba(255,159,0,0.3)' }}>
-                        🔥 {dayMeetings.length} Meeting{dayMeetings.length > 1 ? 's' : ''}
+                      <span className="badge badge-gold" style={{ fontSize: '0.68rem', padding: '3px 8px', fontWeight: '800', boxShadow: '0 2px 6px rgba(255,159,0,0.3)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Flame size={11} color="#ff9f00" /> {dayMeetings.length} Meeting{dayMeetings.length > 1 ? 's' : ''}
                       </span>
                     )}
                   </div>

@@ -570,7 +570,7 @@ export function LoginPage({ onLoginSuccess, onCancel, noticeMessage }) {
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                justify: 'center',
+                justifyContent: 'center',
                 gap: '8px',
                 boxShadow: '0 6px 20px rgba(255, 69, 0, 0.35)',
                 transition: 'all 0.2s ease',

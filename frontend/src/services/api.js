@@ -71,7 +71,21 @@ function synthesizeClientBotResponse(message, sessionId) {
     };
   }
 
-  if (['location', 'where', 'area', 'city', 'gachibowli', 'kondapur'].some(p => msgLower.includes(p))) {
+  const locationMatch = ['gachibowli', 'kondapur', 'madhapur', 'jubilee hills', 'narsingi'].find(loc => msgLower.includes(loc));
+  if (locationMatch) {
+    extracted.location = locationMatch.charAt(0).toUpperCase() + locationMatch.slice(1);
+    return {
+      reply: `Great! We have beautiful properties in **${extracted.location}**.\n\nCould you let me know your approximate budget or preferred property type (Villa, Apartment, Plot)?`,
+      intent: 'requirement_gathering',
+      session_id: session,
+      extracted_entities: extracted,
+      suggested_actions: ['Find Apartments', 'Find Villas', 'Under 2 Crores'],
+      score_change: 15,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  if (['location', 'where', 'area', 'city'].some(p => msgLower.includes(p))) {
     return {
       reply: `📍 **Prime Locations Available**:\n\nWe have excellent properties in top areas including Gachibowli, Kondapur, Madhapur, Jubilee Hills, and Narsingi.\n\nEach location offers great connectivity, proximity to IT parks, and premium lifestyle conveniences.\n\nWhich area are you most interested in?`,
       intent: 'location_inquiry',
@@ -107,6 +121,28 @@ function synthesizeClientBotResponse(message, sessionId) {
     };
   }
 
+  const propertyTypeMatch = ['villa', 'apartment', 'flat', 'plot'].find(type => msgLower.includes(type));
+  const bhkMatch = message.match(/(\d)\s*(?:bhk|bedroom|bed)/i);
+  
+  if (propertyTypeMatch || bhkMatch) {
+    if (propertyTypeMatch) extracted.property_type = propertyTypeMatch.charAt(0).toUpperCase() + propertyTypeMatch.slice(1);
+    if (bhkMatch) extracted.bhk = parseInt(bhkMatch[1], 10);
+    
+    let propDesc = [];
+    if (extracted.bhk) propDesc.push(`${extracted.bhk} BHK`);
+    if (extracted.property_type) propDesc.push(extracted.property_type);
+    
+    return {
+      reply: `Excellent! You're looking for a **${propDesc.join(' ')}**. We have several premium options available.\n\nCould you let me know your preferred location (e.g., Gachibowli, Kondapur) and your approximate budget?`,
+      intent: 'requirement_gathering',
+      session_id: session,
+      extracted_entities: extracted,
+      suggested_actions: ['Gachibowli', 'Kondapur', 'Under 2 Cr'],
+      score_change: 15,
+      timestamp: new Date().toISOString()
+    };
+  }
+
   return {
     reply: `💡 I can help you find your perfect home. Tell me a bit about what you are looking for—like your preferred location, budget, or whether you want an apartment or a villa.\n\nWe have listings across major areas. Would you like to schedule a site visit or browse properties?`,
     intent: 'general_inquiry',
@@ -121,6 +157,22 @@ function synthesizeClientBotResponse(message, sessionId) {
 // Local Storage Keys & Fallback Helpers
 const LOCAL_LEADS_KEY = 'salesbot_persistent_leads';
 const LOCAL_MEETINGS_KEY = 'salesbot_persistent_meetings';
+const LOCAL_PROPERTIES_KEY = 'salesbot_persistent_properties';
+
+function getLocalProperties() {
+  try {
+    const data = localStorage.getItem(LOCAL_PROPERTIES_KEY);
+    return data ? JSON.parse(data) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveLocalProperties(properties) {
+  try {
+    localStorage.setItem(LOCAL_PROPERTIES_KEY, JSON.stringify(properties));
+  } catch (e) {}
+}
 
 function getLocalLeads() {
   try {
@@ -239,6 +291,64 @@ const DEFAULT_INITIAL_MEETINGS = [
     duration_minutes: 60,
     status: "Scheduled",
     notes: "Final sign-off meeting at the property."
+  }
+];
+
+const DEFAULT_INITIAL_PROPERTIES = [
+  {
+    id: 1,
+    name: "Green Valley Villas",
+    description: "Luxury 4 BHK villas with private garden and pool.",
+    location: "Gachibowli",
+    property_type: "Villa",
+    bhk: 4,
+    price: 25000000,
+    area: "4000 sqft",
+    amenities: "Pool, Gym, Garden, 24/7 Security"
+  },
+  {
+    id: 2,
+    name: "Urban Nest",
+    description: "Modern 3 BHK apartments in the heart of the city.",
+    location: "Kondapur",
+    property_type: "Apartment",
+    bhk: 3,
+    price: 12000000,
+    area: "1800 sqft",
+    amenities: "Clubhouse, Park, Power Backup"
+  },
+  {
+    id: 3,
+    name: "Lakeview Residences",
+    description: "Spacious 3 BHK apartments with lake view.",
+    location: "Kondapur",
+    property_type: "Apartment",
+    bhk: 3,
+    price: 14000000,
+    area: "2000 sqft",
+    amenities: "Lake View, Gym, Jogging Track"
+  },
+  {
+    id: 4,
+    name: "Sunset Plots",
+    description: "Premium villa plots for custom homes.",
+    location: "Narsingi",
+    property_type: "Plot",
+    bhk: null,
+    price: 8000000,
+    area: "300 sq yds",
+    amenities: "Gated Community, Water, Electricity"
+  },
+  {
+    id: 5,
+    name: "Elite Towers",
+    description: "High-rise luxury 2 BHK apartments.",
+    location: "Madhapur",
+    property_type: "Apartment",
+    bhk: 2,
+    price: 9500000,
+    area: "1200 sqft",
+    amenities: "Infinity Pool, Smart Home, Concierge"
   }
 ];
 
@@ -776,6 +886,82 @@ export const apiService = {
     if (local) {
       saveLocalMeetings(local.filter(m => m.id !== meetingId));
     }
+    return true;
+  },
+
+  // Properties API
+  async getProperties() {
+    try {
+      const res = await fetch(`${API_BASE}/properties`);
+      if (!res.ok) throw new Error('Failed to fetch properties');
+      const properties = await res.json();
+      if (properties && properties.length > 0) {
+        saveLocalProperties(properties);
+      }
+      return properties;
+    } catch (err) {
+      console.warn('API connection offline, using client-side property data', err);
+      let local = getLocalProperties();
+      if (!local || local.length === 0) {
+        local = DEFAULT_INITIAL_PROPERTIES;
+        saveLocalProperties(local);
+      }
+      return local;
+    }
+  },
+
+  async createProperty(propertyData) {
+    try {
+      const res = await fetch(`${API_BASE}/properties`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(propertyData)
+      });
+      if (res.ok) {
+        const createdObj = await res.json();
+        let local = getLocalProperties() || DEFAULT_INITIAL_PROPERTIES;
+        saveLocalProperties([createdObj, ...local]);
+        return createdObj;
+      }
+    } catch (err) {
+      console.warn('API connection offline, using client-side property creation', err);
+    }
+    const createdObj = { id: Date.now(), ...propertyData };
+    let local = getLocalProperties() || DEFAULT_INITIAL_PROPERTIES;
+    saveLocalProperties([createdObj, ...local]);
+    return createdObj;
+  },
+
+  async updateProperty(propertyId, propertyData) {
+    try {
+      const res = await fetch(`${API_BASE}/properties/${propertyId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(propertyData)
+      });
+      if (res.ok) {
+        const updatedObj = await res.json();
+        let local = getLocalProperties() || DEFAULT_INITIAL_PROPERTIES;
+        saveLocalProperties(local.map(p => p.id === propertyId ? { ...p, ...updatedObj } : p));
+        return updatedObj;
+      }
+    } catch (err) {
+      console.warn('API update unavailable, updating client-side', err);
+    }
+    const updatedObj = { id: propertyId, ...propertyData };
+    let local = getLocalProperties() || DEFAULT_INITIAL_PROPERTIES;
+    saveLocalProperties(local.map(p => p.id === propertyId ? { ...p, ...updatedObj } : p));
+    return updatedObj;
+  },
+
+  async deleteProperty(propertyId) {
+    try {
+      await fetch(`${API_BASE}/properties/${propertyId}`, { method: 'DELETE' });
+    } catch (err) {
+      console.warn('API delete unavailable, deleting client-side', err);
+    }
+    let local = getLocalProperties() || DEFAULT_INITIAL_PROPERTIES;
+    saveLocalProperties(local.filter(p => p.id !== propertyId));
     return true;
   },
 

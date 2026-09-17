@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import DriftWall from '../DriftWall/DriftWall';
 import { 
   Sparkles, 
   Zap, 
@@ -27,7 +28,9 @@ import {
   Globe,
   Clock,
   UserCheck,
-  ArrowUpRight
+  ArrowUpRight,
+  Snowflake,
+  BookOpen
 } from 'lucide-react';
 
 export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, currentUser }) {
@@ -37,12 +40,12 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
     const scenarios = {
     enterprise: {
       key: 'enterprise',
-      label: '🔥 Premium Buyer (₹2.5 Cr+)',
+      label: <><Flame size={12} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Premium Buyer (₹2.5 Cr+)</>,
       name: 'Ravi Kumar',
       role: 'IT Director',
       company: 'TCS',
       score: 92,
-      category: '🔥 HOT LEAD (High Intent)',
+      category: <><Flame size={12} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> HOT LEAD (High Intent)</>,
       badgeClass: 'badge-hot',
       color: '#10b981',
       userMessage: "I'm looking for a premium 4 BHK villa in Gachibowli with a budget of ₹3 Crores. We want to move in by Q3.",
@@ -53,16 +56,16 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
         { label: 'Budget', val: '₹3 Cr', color: '#ff9f00' }
       ],
       bant: { budget: 95, need: 90, authority: 92, timeline: 90 },
-      actionLog: '✅ Google Calendar Link Generated • Site Visit Booked Tomorrow 10:00 AM'
+      actionLog: <><Calendar size={12} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Google Calendar Link Generated • Site Visit Booked Tomorrow 10:00 AM</>
     },
     midmarket: {
       key: 'midmarket',
-      label: '⚡ Mid-Range Buyer (₹80L)',
+      label: <><Zap size={12} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Mid-Range Buyer (₹80L)</>,
       name: 'Sneha Reddy',
       role: 'Software Engineer',
       company: 'Infosys',
       score: 68,
-      category: '⚡ WARM LEAD (Nurture)',
+      category: <><Zap size={12} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> WARM LEAD (Nurture)</>,
       badgeClass: 'badge-warm',
       color: '#ff9f00',
       userMessage: "We are looking for a 3 BHK apartment in Kondapur, budget is around 85 Lakhs.",
@@ -73,16 +76,16 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
         { label: 'Budget', val: '₹85 Lakhs', color: '#a855f7' }
       ],
       bant: { budget: 65, need: 75, authority: 70, timeline: 60 },
-      actionLog: '📧 Nurture Sequence Triggered • Property Brochure Dispatched'
+      actionLog: <><Mail size={12} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Nurture Sequence Triggered • Property Brochure Dispatched</>
     },
     cold: {
       key: 'cold',
-      label: '❄️ Plot Inquiry',
+      label: <><Snowflake size={12} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Plot Inquiry</>,
       name: 'Vikram Singh',
       role: 'Business Owner',
       company: 'Self-Employed',
       score: 35,
-      category: '❄️ COLD LEAD (Self-Serve)',
+      category: <><Snowflake size={12} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> COLD LEAD (Self-Serve)</>,
       badgeClass: 'badge-cold',
       color: '#38bdf8',
       userMessage: "Just exploring open plots for investment, no immediate plans to buy.",
@@ -93,7 +96,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
         { label: 'Budget', val: 'Evaluating', color: '#94a3b8' }
       ],
       bant: { budget: 30, need: 40, authority: 35, timeline: 35 },
-      actionLog: '📖 Investment Guide Link Provided'
+      actionLog: <><BookOpen size={12} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Investment Guide Link Provided</>
     }
   };
 
@@ -469,37 +472,42 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
           </h2>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
-          {[
-            { title: 'Real-Time Lead Scoring', desc: 'Instant 0-100 qualification rating on every inbound message.', icon: Target, bg: '#e6f0ff', color: '#0072ff' },
-            { title: '1-Click Embed Snippet', desc: 'Deploy on WordPress, Webflow, Shopify, or custom HTML in 60s.', icon: Code, bg: '#fff3d6', color: '#ff9f00' },
-            { title: 'AI Follow-Up Generator', desc: 'Drafts customized email sequences based on property preferences.', icon: Mail, bg: '#ffe5e5', color: '#ff3b30' },
-            { title: 'Multi-Turn Session Memory', desc: 'Extracts name, email, location, and budget naturally.', icon: MessageSquare, bg: '#f3e8ff', color: '#8b5cf6' },
-            { title: 'High-Intent Alerting', desc: 'Flags hot enterprise opportunities immediately for sales reps.', icon: Flame, bg: '#ffe5e5', color: '#ff3b30' },
-            { title: 'CRM & REST API Sync', desc: 'FastAPI endpoints (/api/v1/leads) to sync with any CRM.', icon: Layers, bg: '#e0f2fe', color: '#0369a1' },
-            { title: 'Autonomous Site Visit Booking', desc: 'Google Calendar link generation inside live chat.', icon: Calendar, bg: '#d1fae5', color: '#10b981' },
-            { title: 'Pipeline Velocity Analytics', desc: 'Live metrics on lead volume, conversion rates, and revenue.', icon: TrendingUp, bg: '#e6f0ff', color: '#0072ff' },
-            { title: 'Enterprise SOC2 Security', desc: 'Encrypted multi-tenant data storage and compliance safeguards.', icon: ShieldCheck, bg: '#fff3d6', color: '#ff9f00' }
-          ].map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <div key={idx} style={{
-                background: '#ffffff',
-                borderRadius: '16px',
-                padding: '16px',
-                border: '1px solid #EBE5D8',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px'
-              }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon size={18} color={item.color} />
-                </div>
-                <h4 style={{ fontSize: '0.98rem', fontWeight: '800', color: '#1c1b18' }}>{item.title}</h4>
-                <p style={{ fontSize: '0.82rem', color: '#64748b', lineHeight: 1.45 }}>{item.desc}</p>
-              </div>
-            );
-          })}
+        <div style={{ height: '600px', width: '100%', marginTop: '24px', borderRadius: '24px', overflow: 'hidden' }}>
+          <DriftWall
+            items={[
+              { image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop', title: 'Real-Time Lead Scoring' },
+              { image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&h=400&fit=crop', title: '1-Click Embed Snippet' },
+              { image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&h=400&fit=crop', title: 'AI Follow-Up Generator' },
+              { image: 'https://images.unsplash.com/photo-1512428559087-560fa5ceab42?w=600&h=400&fit=crop', title: 'Multi-Turn Session Memory' },
+              { image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=400&fit=crop', title: 'High-Intent Alerting' },
+              { image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=400&fit=crop', title: 'CRM & REST API Sync' },
+              { image: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=600&h=400&fit=crop', title: 'Autonomous Booking' },
+              { image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop', title: 'Pipeline Analytics' },
+              { image: 'https://images.unsplash.com/photo-1510511459019-5efa3206a466?w=600&h=400&fit=crop', title: 'Enterprise SOC2 Security' },
+              { image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=400&fit=crop', title: 'Property Matching AI' },
+              { image: 'https://images.unsplash.com/photo-1521295121783-8a321d551ad2?w=600&h=400&fit=crop', title: 'Multi-Language Support' },
+              { image: 'https://images.unsplash.com/photo-1526045612212-70cb359f26fe?w=600&h=400&fit=crop', title: 'WhatsApp Integration' },
+              { image: 'https://images.unsplash.com/photo-1626885930974-4b69aa21bbf9?w=600&h=400&fit=crop', title: 'Custom Workflows' },
+              { image: 'https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=600&h=400&fit=crop', title: 'Role-Based Access' },
+              { image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop', title: '24/7 Agent Availability' }
+            ]}
+            columns={5}
+            tileWidth={220}
+            tileHeight={150}
+            gap={18}
+            tilt={16}
+            turn={-14}
+            perspective={1200}
+            depth={120}
+            speed={35}
+            direction="up"
+            variance={0.45}
+            parallax={0.6}
+            lift={64}
+            fade={0.1}
+            dim={0.8}
+            overlayColor="#060010"
+          />
         </div>
       </section>
 
@@ -542,15 +550,18 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
             border: '1px solid rgba(255, 255, 255, 0.1)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '10px', marginBottom: '12px' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#ffd700' }}>🔥 HOT LEAD QUALIFIED</span>
+              <span style={{ fontSize: '0.78rem', fontWeight: '700', color: '#ffd700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Flame size={12} /> HOT LEAD QUALIFIED
+              </span>
               <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Score: 88 / 100</span>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '10px', marginBottom: '10px' }}>
               <div style={{ fontSize: '0.88rem', fontWeight: '800' }}>Sarah Connor</div>
               <div style={{ fontSize: '0.74rem', color: '#94a3b8' }}>Cyberdyne Systems • sarah@cyberdyne.io</div>
             </div>
-            <div style={{ fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.45, background: 'rgba(16, 185, 129, 0.15)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-              ✅ Site Visit Booked: Tomorrow at 10:30 AM IST (Calendar Link Sent)
+            <div style={{ fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.45, background: 'rgba(16, 185, 129, 0.15)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+              <CheckCircle2 size={14} color="#10b981" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <span>Site Visit Booked: Tomorrow at 10:30 AM IST (Calendar Link Sent)</span>
             </div>
           </div>
         </div>
@@ -570,8 +581,8 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
           
           {/* Section Header */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', maxWidth: '600px', margin: '0 auto 16px auto', gap: '4px' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: '900', color: '#ffd700', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-              ⚡ LIVE REVENUE TELEMETRY
+            <span style={{ fontSize: '0.72rem', fontWeight: '900', color: '#ffd700', letterSpacing: '0.12em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Zap size={12} color="#ffd700" /> LIVE REVENUE TELEMETRY
             </span>
             <h2 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#ffffff', margin: 0, letterSpacing: '-0.02em' }}>
               Interactive Real Estate Qualification Console
@@ -643,7 +654,7 @@ export function LandingPage({ setActiveTab, onOpenLeadModal, onOpenEmbedModal, c
                   {/* Bot Response */}
                   <div style={{ background: 'rgba(0, 114, 255, 0.18)', border: '1px solid rgba(0, 114, 255, 0.35)', padding: '10px 14px', borderRadius: '10px', fontSize: '0.82rem', color: '#ffffff', lineHeight: 1.45 }}>
                     <span style={{ fontWeight: '800', color: '#ffd700', fontSize: '0.74rem', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '3px' }}>
-                      🤖 EstateBot AI:
+                      <Bot size={12} /> EstateBot AI:
                     </span>
                     "{currentScenario.botReply}"
                   </div>

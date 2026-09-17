@@ -15,7 +15,13 @@ import {
   Building,
   Mail,
   DollarSign,
-  ArrowLeft
+  ArrowLeft,
+  Search,
+  Home,
+  Scale,
+  CalendarClock,
+  Server,
+  Rocket
 } from 'lucide-react';
 import { marked } from 'marked';
 import { apiService } from '../../services/api';
@@ -44,7 +50,7 @@ export function BotPlayground({ onLeadOrMeetingUpdated, onBack }) {
       {
         id: 1,
         sender: 'assistant',
-        text: "👋 Welcome to the **Property Sales AI Assistant Console**!\n\nI am configured with **Real Estate Entity Extraction**, **Property Matching**, and **Site Visit Booking**.\n\nTry sending a message like: *\"I am looking for a 3 BHK villa in Hyderabad under 1.5 Crores. Can we schedule a site visit?\"*",
+        text: "Welcome to the **Property Sales AI Assistant Console**!\n\nI am configured with **Real Estate Entity Extraction**, **Property Matching**, and **Site Visit Booking**.\n\nTry sending a message like: *\"I am looking for a 3 BHK villa in Hyderabad under 1.5 Crores. Can we schedule a site visit?\"*",
         intent: "welcome",
         suggested_actions: ["Find a Property", "Properties under my budget", "Book a Site Visit", "Compare Properties"],
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -493,8 +499,8 @@ export function BotPlayground({ onLeadOrMeetingUpdated, onBack }) {
 
             {/* Quick Test Scenarios */}
             <div className="glass-panel" style={{ padding: '20px' }}>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '10px' }}>
-                🚀 Quick Test Scenarios
+              <h3 style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Rocket size={16} color="#ffd700" /> Quick Test Scenarios
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <button
@@ -502,36 +508,36 @@ export function BotPlayground({ onLeadOrMeetingUpdated, onBack }) {
                   style={{ textAlign: 'left', fontSize: '0.78rem', padding: '8px 12px' }}
                   onClick={() => handleSend("I'm looking for a 3 BHK apartment in Gachibowli under 2 Crores")}
                 >
-                  📝 1. Search Properties
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Search size={14} color="#0072ff"/> 1. Search Properties</span>
                 </button>
                 <button
                   className="btn btn-secondary"
                   style={{ textAlign: 'left', fontSize: '0.78rem', padding: '8px 12px' }}
                   onClick={() => handleSend("What villas do you have available?")}
                 >
-                  🎯 2. Inquire Property Types
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Home size={14} color="#10b981"/> 2. Inquire Property Types</span>
                 </button>
                 <button
                   className="btn btn-secondary"
                   style={{ textAlign: 'left', fontSize: '0.78rem', padding: '8px 12px' }}
                   onClick={() => handleSend("Can you compare the properties you just suggested?")}
                 >
-                  💰 3. Compare Properties
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Scale size={14} color="#f59e0b"/> 3. Compare Properties</span>
                 </button>
                 <button
                   className="btn btn-secondary"
                   style={{ textAlign: 'left', fontSize: '0.78rem', padding: '8px 12px' }}
                   onClick={() => handleSend("I want to book a site visit for this weekend")}
                 >
-                  📅 4. Book Site Visit
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CalendarClock size={14} color="#ec4899"/> 4. Book Site Visit</span>
                 </button>
               </div>
             </div>
 
             {/* API Endpoints Reference */}
             <div className="glass-panel" style={{ padding: '16px', background: '#f8fafc' }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '6px' }}>
-                📡 Registered Endpoints:
+              <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Server size={14} color="#64748b" /> Registered Endpoints:
               </div>
               <ul style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', paddingLeft: '16px', lineHeight: '1.6' }}>
                 <li><code>POST /api/v1/bot/chat</code></li>

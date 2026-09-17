@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.repositories.property_repository import PropertyRepository
-from app.schemas.property import PropertyResponse, PropertySearchRequest
+from app.schemas.property import PropertyResponse, PropertySearchRequest, PropertyCreate, PropertyUpdate
 
 router = APIRouter()
 
@@ -33,6 +33,32 @@ def get_property(property_id: int, db: Session = Depends(get_db)):
     if not property:
         raise HTTPException(status_code=404, detail="Property not found")
     return property
+
+@router.post("/", response_model=PropertyResponse)
+def create_property(property_in: PropertyCreate, db: Session = Depends(get_db)):
+    """
+    Create a new property.
+    """
+    return PropertyRepository.create(db, property_in)
+
+@router.put("/{property_id}", response_model=PropertyResponse)
+def update_property(property_id: int, property_in: PropertyUpdate, db: Session = Depends(get_db)):
+    """
+    Update a property by ID.
+    """
+    db_property = PropertyRepository.get_by_id(db, property_id)
+    if not db_property:
+        raise HTTPException(status_code=404, detail="Property not found")
+    return PropertyRepository.update(db, db_property, property_in)
+
+@router.delete("/{property_id}")
+def delete_property(property_id: int, db: Session = Depends(get_db)):
+    """
+    Delete a property by ID.
+    """
+    if not PropertyRepository.delete(db, property_id):
+        raise HTTPException(status_code=404, detail="Property not found")
+    return {"detail": "Property deleted successfully"}
 
 @router.post("/search", response_model=List[PropertyResponse])
 def search_properties(search_req: PropertySearchRequest, db: Session = Depends(get_db)):

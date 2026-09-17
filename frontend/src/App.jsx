@@ -14,6 +14,8 @@ import { FloatingChatWidget } from './components/FloatingWidget/FloatingChatWidg
 import { EmbedCodeModal } from './components/FloatingWidget/EmbedCodeModal';
 import { LoginPage } from './components/Auth/LoginPage';
 import { MeetingsView } from './components/Meetings/MeetingsView';
+import { PropertiesView } from './components/Properties/PropertiesView';
+import { PropertyModal } from './components/Forms/PropertyModal';
 import { apiService } from './services/api';
 import { Calendar, Clock, CheckCircle, Pencil, Trash2, ArrowLeft } from 'lucide-react';
 
@@ -23,15 +25,18 @@ export function App() {
   const [leads, setLeads] = useState([]);
   const [summary, setSummary] = useState(null);
   const [meetings, setMeetings] = useState([]);
+  const [properties, setProperties] = useState([]);
   
   const [selectedLead, setSelectedLead] = useState(null);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   const [isEmbedModalOpen, setIsEmbedModalOpen] = useState(false);
   const [isImportCSVModalOpen, setIsImportCSVModalOpen] = useState(false);
+  const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
 
   const [editingLead, setEditingLead] = useState(null);
   const [editingMeeting, setEditingMeeting] = useState(null);
+  const [editingProperty, setEditingProperty] = useState(null);
   const [loginNotice, setLoginNotice] = useState('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMessage, setAuthModalMessage] = useState('');
@@ -61,7 +66,7 @@ export function App() {
 
   // Protect Dashboard & Workspace views — open Sign In if not logged in
   useEffect(() => {
-    const protectedTabs = ['dashboard', 'bot', 'leads', 'analytics', 'meetings'];
+    const protectedTabs = ['dashboard', 'bot', 'leads', 'analytics', 'meetings', 'properties'];
     if (protectedTabs.includes(activeTab) && (!currentUser || !currentUser.isLoggedIn)) {
       setLoginNotice('Please Sign In or Create an Account to access the Sales Bot API & Workspace.');
       setActiveTab('login');
@@ -70,14 +75,16 @@ export function App() {
 
   const loadInitialData = async () => {
     try {
-      const [leadsData, summaryData, meetingsData] = await Promise.all([
+      const [leadsData, summaryData, meetingsData, propertiesData] = await Promise.all([
         apiService.getLeads(),
         apiService.getAnalyticsSummary(),
-        apiService.getMeetings()
+        apiService.getMeetings(),
+        apiService.getProperties()
       ]);
       setLeads(leadsData);
       setSummary(summaryData);
       setMeetings(meetingsData);
+      setProperties(propertiesData);
     } catch (err) {
       console.error('Error loading initial app data:', err);
     }
@@ -242,6 +249,50 @@ export function App() {
     }
   };
 
+  const handleOpenCreateProperty = () => {
+    if (!currentUser || !currentUser.isLoggedIn) {
+      setLoginNotice('Please Sign In or Create an Account to manage properties.');
+      setActiveTab('login');
+      return;
+    }
+    setEditingProperty(null);
+    setIsPropertyModalOpen(true);
+  };
+
+  const handleOpenEditProperty = (property) => {
+    if (!currentUser || !currentUser.isLoggedIn) {
+      setLoginNotice('Please Sign In or Create an Account to manage properties.');
+      setActiveTab('login');
+      return;
+    }
+    setEditingProperty(property);
+    setIsPropertyModalOpen(true);
+  };
+
+  const handleSaveProperty = async (propertyData) => {
+    try {
+      if (editingProperty) {
+        const updated = await apiService.updateProperty(editingProperty.id, propertyData);
+        setProperties(prev => prev.map(p => p.id === editingProperty.id ? { ...p, ...updated } : p));
+      } else {
+        const created = await apiService.createProperty(propertyData);
+        setProperties(prev => [created, ...prev]);
+      }
+    } catch (err) {
+      console.error('Error saving property:', err);
+    }
+  };
+
+  const handleDeleteProperty = async (propertyId) => {
+    if (!currentUser || !currentUser.isLoggedIn) return;
+    try {
+      await apiService.deleteProperty(propertyId);
+      setProperties(prev => prev.filter(p => p.id !== propertyId));
+    } catch (err) {
+      console.error('Error deleting property:', err);
+    }
+  };
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
@@ -336,6 +387,15 @@ export function App() {
           />
         )}
 
+        {activeTab === 'properties' && (
+          <PropertiesView
+            properties={properties}
+            onOpenPropertyModal={handleOpenCreateProperty}
+            onEditProperty={handleOpenEditProperty}
+            onDeleteProperty={handleDeleteProperty}
+          />
+        )}
+
       </main>
 
       {/* Floating Website Chat Widget (<script> / Embeddable Mode) - Hidden when viewing Lead Detail drawer */}
@@ -388,6 +448,16 @@ export function App() {
         selectedLead={selectedLead}
         meetingToEdit={editingMeeting}
         existingMeetings={meetings}
+      />
+
+      <PropertyModal
+        isOpen={isPropertyModalOpen}
+        onClose={() => {
+          setIsPropertyModalOpen(false);
+          setEditingProperty(null);
+        }}
+        onSubmit={handleSaveProperty}
+        propertyToEdit={editingProperty}
       />
 
       {/* Auth Required Popup Message Modal */}
