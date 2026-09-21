@@ -151,21 +151,23 @@ const CardNav = ({
     <div className={`card-nav-container ${className}`}>
       <nav ref={navRef} className={`card-nav ${isExpanded ? 'open' : ''}`} style={{ backgroundColor: baseColor }}>
         <div className="card-nav-top">
-          <div
-            className={`hamburger-menu ${isHamburgerOpen ? 'open' : ''}`}
-            onClick={toggleMenu}
-            role="button"
-            aria-label={isExpanded ? 'Close menu' : 'Open menu'}
-            aria-expanded={isExpanded}
-            tabIndex={0}
-            style={{ color: menuColor }}
-          >
-            <div className="hamburger-line" />
-            <div className="hamburger-line" />
-          </div>
+          <div className="card-nav-left">
+            <div
+              className={`hamburger-menu ${isHamburgerOpen ? 'open' : ''}`}
+              onClick={toggleMenu}
+              role="button"
+              aria-label={isExpanded ? 'Close menu' : 'Open menu'}
+              aria-expanded={isExpanded}
+              tabIndex={0}
+              style={{ color: menuColor }}
+            >
+              <div className="hamburger-line" />
+              <div className="hamburger-line" />
+            </div>
 
-          <div className="logo-container" onClick={onLogoClick}>
-            {logoComponent ? logoComponent : <img src={logo} alt="Logo" className="logo" />}
+            <div className="logo-container" onClick={onLogoClick}>
+              {logoComponent ? logoComponent : <img src={logo} alt="Logo" className="logo" />}
+            </div>
           </div>
 
           <div className="card-nav-actions">

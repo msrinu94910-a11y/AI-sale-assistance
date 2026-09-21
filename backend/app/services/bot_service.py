@@ -393,6 +393,39 @@ class SalesBotService:
             intent = "demo_booked"
             suggested_actions = ["Add to Calendar", "Reschedule"]
             score_change = 30
+            
+            # Auto-create Meeting and send Email
+            if lead_obj:
+                try:
+                    from datetime import timedelta
+                    from app.models.meeting import Meeting
+                    from app.services.communication_service import CommunicationService
+                    
+                    meeting_date = datetime.now(timezone.utc) + timedelta(days=1, hours=4)
+                    meeting_title = f"Site Visit for {lead_obj.name or 'Client'}"
+                    meeting = Meeting(
+                        lead_id=lead_obj.id,
+                        lead_name=lead_obj.name or "Website Visitor",
+                        title=meeting_title,
+                        meeting_date=meeting_date,
+                        duration_minutes=60,
+                        status="Scheduled",
+                        notes="Auto-booked via AI Assistant Chat"
+                    )
+                    db.add(meeting)
+                    db.commit()
+                    db.refresh(meeting)
+                    
+                    if lead_obj.email:
+                        CommunicationService.send_meeting_confirmation(
+                            lead_email=lead_obj.email, 
+                            lead_name=lead_obj.name or "Client", 
+                            meeting_title=meeting_title, 
+                            meeting_date=meeting_date
+                        )
+                except Exception as e:
+                    db.rollback()
+                    print(f"Error auto-booking meeting during chat: {e}")
         elif llm_reply_dict:
             reply = llm_reply_dict.get("reply", "")
             intent = llm_reply_dict.get("intent", "llm_generated")

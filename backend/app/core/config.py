@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     GROQ_MODEL: str = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
     GROK_API_KEY: str = os.getenv("GROK_API_KEY", "")
     
+    # SMTP Configuration
+    SMTP_SERVER: str = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", 587))
+    SMTP_USER: str = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    
     # CORS
     CORS_ORIGINS: List[str] = [
         "*",

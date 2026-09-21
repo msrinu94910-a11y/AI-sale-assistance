@@ -36,6 +36,12 @@
   z-index: 2;
 }
 
+.card-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
 .hamburger-menu {
   height: 100%;
   display: flex;
@@ -171,14 +177,18 @@
     justify-content: space-between;
   }
 
+  .card-nav-left {
+    gap: 12px;
+  }
+
   .hamburger-menu {
-    order: 2;
+    order: 1;
   }
 
   .logo-container {
     position: static;
     transform: none;
-    order: 1;
+    order: 2;
   }
 
   .card-nav-actions {

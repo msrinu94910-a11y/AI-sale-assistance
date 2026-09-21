@@ -5,12 +5,13 @@ import os
 import smtplib
 from email.message import EmailMessage
 from app.models.lead import Lead
+from app.core.config import settings
 
 def _send_smtp_email(to_email: str, subject: str, body: str):
-    smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-    smtp_port = int(os.getenv("SMTP_PORT", 587))
-    smtp_user = os.getenv("SMTP_USER")
-    smtp_pass = os.getenv("SMTP_PASSWORD")
+    smtp_server = settings.SMTP_SERVER
+    smtp_port = settings.SMTP_PORT
+    smtp_user = settings.SMTP_USER
+    smtp_pass = settings.SMTP_PASSWORD
     
     if not smtp_user or not smtp_pass:
         print("--- SMTP Credentials Missing! Cannot send email ---")
