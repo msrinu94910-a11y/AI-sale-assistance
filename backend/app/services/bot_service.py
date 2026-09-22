@@ -21,8 +21,12 @@ from app.schemas.bot import (
     BotBookRequest,
     BotBookResponse
 )
+from app.api.v1.endpoints.ws import manager
+import asyncio
 
 class SalesBotService:
+    paused_sessions = set()
+
     """
     Dedicated AI Real Estate Sales Assistant Service supporting:
     1. Multi-turn Session Management & Conversation History
@@ -298,6 +302,38 @@ class SalesBotService:
             for h in history_records
         ]
 
+        # IF session is paused (Human Agent took over), skip LLM and just save the message.
+        if session_id in cls.paused_sessions:
+            try:
+                user_turn = Conversation(
+                    session_id=session_id,
+                    lead_id=req.lead_id,
+                    sender="user",
+                    message=msg,
+                    intent="human_handoff",
+                    timestamp=datetime.now(timezone.utc)
+                )
+                db.add(user_turn)
+                db.commit()
+                
+                # Notify agents that the user replied during a paused session
+                asyncio.run(manager.broadcast_to_agents({
+                    "type": "handoff_user_reply",
+                    "session_id": session_id,
+                    "message": msg
+                }))
+            except Exception:
+                pass
+                
+            return BotChatResponse(
+                reply="",  # Empty string because agent will type manually via WebSockets
+                intent="human_handoff",
+                session_id=session_id,
+                extracted_entities=ExtractedEntities(),
+                suggested_actions=[],
+                timestamp=datetime.now(timezone.utc)
+            )
+
         entities = cls.extract_entities(msg)
         
         # Early Lead Retrieval / Creation to access accumulated preferences
@@ -481,6 +517,18 @@ class SalesBotService:
                 score=lead_obj.score,
                 category=lead_obj.category
             )
+            # Live Notifications: If Lead is Hot, alert agents
+            if lead_obj.category == "Hot":
+                try:
+                    asyncio.run(manager.broadcast_to_agents({
+                        "type": "hot_lead_alert",
+                        "session_id": session_id,
+                        "lead_name": lead_obj.name or "Unknown Hot Lead",
+                        "score": lead_obj.score,
+                        "message": msg
+                    }))
+                except Exception as e:
+                    print(f"WS Broadcast Error: {e}")
 
         # Only attach properties to the UI response if the intent warrants it.
         # This prevents property cards from showing up alongside unrelated messages (like booking a visit).
@@ -635,3 +683,30 @@ class SalesBotService:
             status=meeting.status,
             confirmation_message=confirm_msg
         )
+
+    @classmethod
+    def pause_session(cls, session_id: str):
+        cls.paused_sessions.add(session_id)
+
+    @classmethod
+    def send_agent_message(cls, session_id: str, message: str, db: Session):
+        # Save to DB
+        assistant_turn = Conversation(
+            session_id=session_id,
+            sender="assistant",
+            message=message,
+            intent="human_agent",
+            timestamp=datetime.now(timezone.utc)
+        )
+        db.add(assistant_turn)
+        db.commit()
+        
+        # Broadcast via WebSocket to the user's specific session
+        try:
+            asyncio.run(manager.send_to_session(session_id, {
+                "type": "agent_message",
+                "message": message,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }))
+        except Exception as e:
+            print(f"Error sending agent message via WS: {e}")

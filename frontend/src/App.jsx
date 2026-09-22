@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from './components/Navigation/Navbar';
 import { LandingPage } from './components/LandingPage/LandingPage';
 import { DashboardView } from './components/Dashboard/DashboardView';
@@ -16,6 +16,7 @@ import { LoginPage } from './components/Auth/LoginPage';
 import { MeetingsView } from './components/Meetings/MeetingsView';
 import { PropertiesView } from './components/Properties/PropertiesView';
 import { PropertyModal } from './components/Forms/PropertyModal';
+import { AgentChatModal } from './components/Dashboard/AgentChatModal';
 import { apiService } from './services/api';
 import { Calendar, Clock, CheckCircle, Pencil, Trash2, ArrowLeft } from 'lucide-react';
 
@@ -40,6 +41,26 @@ export function App() {
   const [loginNotice, setLoginNotice] = useState('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMessage, setAuthModalMessage] = useState('');
+  
+  const [hotLeadAlert, setHotLeadAlert] = useState(null);
+  const [isAgentChatOpen, setIsAgentChatOpen] = useState(false);
+  const wsRef = useRef(null);
+
+  useEffect(() => {
+    if (currentUser?.isLoggedIn) {
+      const ws = new WebSocket('ws://localhost:8000/api/v1/ws/agents');
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'hot_lead_alert') {
+            setHotLeadAlert(data);
+          }
+        } catch (e) { console.error('WS parse error', e); }
+      };
+      wsRef.current = ws;
+      return () => ws.close();
+    }
+  }, [currentUser]);
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
@@ -477,6 +498,47 @@ export function App() {
         isOpen={isImportCSVModalOpen}
         onClose={() => setIsImportCSVModalOpen(false)}
         onImportSuccess={handleImportCSVSuccess}
+      />
+
+      {/* Global Toast Alert for Hot Leads */}
+      {hotLeadAlert && !isAgentChatOpen && (
+        <div className="animate-fade-in" style={{
+          position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999,
+          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+          color: '#fff', padding: '16px 24px', borderRadius: '12px',
+          boxShadow: '0 8px 32px rgba(245, 158, 11, 0.4)',
+          display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '300px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              🔥 Hot Lead Alert!
+            </strong>
+            <button onClick={() => setHotLeadAlert(null)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}>×</button>
+          </div>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>
+            <strong>{hotLeadAlert.lead_name}</strong> is chatting right now.<br/>
+            <span style={{ fontSize: '0.8rem', opacity: 0.9 }}>"{hotLeadAlert.message}"</span>
+          </p>
+          <button 
+            onClick={() => {
+              setIsAgentChatOpen(true);
+            }} 
+            className="btn btn-primary" 
+            style={{ background: '#fff', color: '#d97706', border: 'none', fontWeight: 'bold' }}
+          >
+            Take Over Chat
+          </button>
+        </div>
+      )}
+
+      {/* Agent Live Chat Modal */}
+      <AgentChatModal
+        isOpen={isAgentChatOpen}
+        onClose={() => {
+          setIsAgentChatOpen(false);
+          setHotLeadAlert(null); // Clear alert once closed
+        }}
+        alertData={hotLeadAlert}
       />
 
     </div>

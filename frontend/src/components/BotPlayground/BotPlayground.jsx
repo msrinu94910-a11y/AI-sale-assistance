@@ -42,6 +42,31 @@ export function BotPlayground({ onLeadOrMeetingUpdated, onBack }) {
   const [extractedSummary, setExtractedSummary] = useState({});
 
   const messagesEndRef = useRef(null);
+  const wsRef = useRef(null);
+
+  useEffect(() => {
+    // Establish WebSocket connection for live agent messages
+    const ws = new WebSocket(`ws://localhost:8000/api/v1/ws/chat/${sessionId}`);
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'agent_message') {
+          setMessages(prev => [...prev, {
+            id: Date.now(),
+            sender: 'assistant',
+            text: data.message,
+            intent: 'human_agent',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }]);
+        }
+      } catch (err) {
+        console.error('WS parse error', err);
+      }
+    };
+    wsRef.current = ws;
+
+    return () => ws.close();
+  }, [sessionId]);
 
   useEffect(() => {
     loadStatus();
@@ -102,6 +127,11 @@ export function BotPlayground({ onLeadOrMeetingUpdated, onBack }) {
             Object.entries(resp.extracted_entities).filter(([_, v]) => v !== null && v !== undefined && v !== '')
           )
         }));
+      }
+
+      if (resp.intent === 'human_handoff') {
+        // Just append the user message, the agent will reply via WS
+        return;
       }
 
       const botMsg = {

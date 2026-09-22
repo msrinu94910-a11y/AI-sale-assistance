@@ -16,6 +16,11 @@ from app.schemas.bot import (
     BotSessionHistoryResponse,
     BotMessageItem
 )
+from pydantic import BaseModel
+
+class AgentMessageRequest(BaseModel):
+    session_id: str
+    message: str
 
 router = APIRouter()
 
@@ -141,3 +146,30 @@ def book_demo_meeting(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error booking demo meeting: {str(e)}"
         )
+
+@router.post("/sessions/{session_id}/handoff")
+def human_handoff(
+    session_id: str
+):
+    """
+    Pause the AI assistant for this session, allowing a human agent to take over.
+    """
+    try:
+        SalesBotService.pause_session(session_id)
+        return {"status": "success", "message": f"Session {session_id} is now paused for human handoff."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/agent_message")
+def send_agent_message(
+    req: AgentMessageRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Send a message from a human agent to the client via WebSockets.
+    """
+    try:
+        SalesBotService.send_agent_message(req.session_id, req.message, db)
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
