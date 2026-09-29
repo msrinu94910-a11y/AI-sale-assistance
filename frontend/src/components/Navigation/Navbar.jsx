@@ -9,7 +9,8 @@ import {
   Code,
   LogIn,
   LogOut,
-  Building2
+  Building2,
+  Settings
 } from 'lucide-react';
 import CardNav from './CardNav';
 
@@ -61,7 +62,8 @@ export function Navbar({
         { id: 'analytics', label: 'Analytics', icon: BarChart3, onClick: () => setActiveTab('analytics') }
       );
       items[2].links.push(
-        { id: 'bot', label: 'AI Chat API', icon: Bot, onClick: () => setActiveTab('bot') }
+        { id: 'bot', label: 'AI Chat API', icon: Bot, onClick: () => setActiveTab('bot') },
+        { id: 'settings', label: 'Bot Settings & RAG', icon: Settings, onClick: () => setActiveTab('settings') }
       );
     } else {
       // If not logged in, prompt to sign in for these tools

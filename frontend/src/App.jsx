@@ -17,6 +17,7 @@ import { MeetingsView } from './components/Meetings/MeetingsView';
 import { PropertiesView } from './components/Properties/PropertiesView';
 import { PropertyModal } from './components/Forms/PropertyModal';
 import { AgentChatModal } from './components/Dashboard/AgentChatModal';
+import { SettingsView } from './components/Settings/SettingsView';
 import { apiService } from './services/api';
 import { Calendar, Clock, CheckCircle, Pencil, Trash2, ArrowLeft } from 'lucide-react';
 
@@ -87,7 +88,7 @@ export function App() {
 
   // Protect Dashboard & Workspace views — open Sign In if not logged in
   useEffect(() => {
-    const protectedTabs = ['dashboard', 'bot', 'leads', 'analytics', 'meetings', 'properties'];
+    const protectedTabs = ['dashboard', 'bot', 'leads', 'analytics', 'meetings', 'properties', 'settings'];
     if (protectedTabs.includes(activeTab) && (!currentUser || !currentUser.isLoggedIn)) {
       setLoginNotice('Please Sign In or Create an Account to access the Sales Bot API & Workspace.');
       setActiveTab('login');
@@ -415,6 +416,10 @@ export function App() {
             onEditProperty={handleOpenEditProperty}
             onDeleteProperty={handleDeleteProperty}
           />
+        )}
+
+        {activeTab === 'settings' && (
+          <SettingsView currentUser={currentUser} />
         )}
 
       </main>

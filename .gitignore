@@ -28,3 +28,15 @@ sql_app.db
 Thumbs.db
 .vscode/
 .idea/
+
+# Custom AI files
+.gemini/
+.agent/
+.impeccable/
+*.pdf
+
+# RAG & Chroma
+backend/chroma_data/
+backend/knowledge_docs/
+*.db-shm
+*.db-wal

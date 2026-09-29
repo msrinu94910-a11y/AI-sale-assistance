@@ -1,4 +1,4 @@
-const API_BASE = '/api/v1';
+const API_BASE = 'http://127.0.0.1:8000/api/v1';
 
 function synthesizeClientBotResponse(message, sessionId) {
   const msgLower = (message || '').toLowerCase();
@@ -1174,6 +1174,53 @@ export const apiService = {
     localStorage.setItem('salesbot_auth_user', JSON.stringify(userObj));
     localStorage.setItem('salesbot_auth_token', userObj.token);
     return userObj;
+  },
+
+  // Settings & RAG API
+  async getBotSettings() {
+    try {
+      const res = await fetch(`${API_BASE}/settings`);
+      if (res.ok) return await res.json();
+    } catch (e) { console.warn('API error', e); }
+    return { personality: "Professional", custom_instructions: "" };
+  },
+
+  async updateBotSettings(settings) {
+    try {
+      const res = await fetch(`${API_BASE}/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      });
+      if (res.ok) return await res.json();
+    } catch (e) { console.warn('API error', e); }
+    return settings;
+  },
+
+  async getKnowledgeDocuments() {
+    try {
+      const res = await fetch(`${API_BASE}/settings/documents`);
+      if (res.ok) return await res.json();
+    } catch (e) { console.warn('API error', e); }
+    return [];
+  },
+
+  async uploadKnowledgeDocument(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`http://127.0.0.1:8000/api/v1/settings/documents`, {
+      method: 'POST',
+      body: formData
+    });
+    if (res.ok) return await res.json();
+    let errorText = "Unknown error";
+    try { errorText = await res.text(); } catch(e) {}
+    throw new Error(`Upload failed (Status ${res.status}): ${errorText}`);
+  },
+
+  async deleteKnowledgeDocument(id) {
+    await fetch(`${API_BASE}/settings/documents/${id}`, { method: 'DELETE' });
+    return true;
   },
 
   logout() {

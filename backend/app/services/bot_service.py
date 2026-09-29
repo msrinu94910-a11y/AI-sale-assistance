@@ -10,7 +10,9 @@ from app.models.conversation import Conversation
 from app.models.lead import Lead
 from app.models.meeting import Meeting
 from app.models.property import Property
+from app.models.settings import BotSettings
 from app.services.communication_service import CommunicationService
+from app.services.rag_service import rag_service
 from app.schemas.bot import (
     BotChatRequest,
     BotChatResponse,
@@ -103,14 +105,16 @@ class SalesBotService:
         return entities
 
     @classmethod
-    def call_external_llm(cls, message: str, history: List[Dict[str, str]], context: Dict[str, Any], property_context: str = "") -> Optional[Dict[str, str]]:
+    def call_external_llm(cls, message: str, history: List[Dict[str, str]], context: Dict[str, Any], property_context: str = "", personality: str = "Professional", custom_instructions: str = "", rag_context: str = "") -> Optional[Dict[str, str]]:
         context_msg = property_context if property_context else "No properties found matching the current criteria. If the user provided requirements, tell them there are no exact matches and suggest adjusting their search. If they haven't provided requirements, ask them what they are looking for."
         system_prompt = (
-            "You are an elite AI Real Estate Property Assistant for our website. "
+            f"You are an AI Real Estate Property Assistant for our website. Your personality should be {personality}. "
             "Your objective: Help website visitors find their dream property, answer questions about locations and prices, "
             "extract their requirements (Location, BHK, Budget, Property Type), and guide them to schedule a site visit. "
             "Do NOT hallucinate properties. Only recommend properties provided in the context below.\n\n"
+            f"CUSTOM INSTRUCTIONS:\n{custom_instructions}\n\n"
             f"AVAILABLE PROPERTY CONTEXT (from database):\n{context_msg}\n\n"
+            f"KNOWLEDGE BASE (from uploaded documents):\n{rag_context}\n\n"
             "Keep answers concise, helpful, and natural. Always push the conversation forward.\n\n"
             "IMPORTANT: You MUST respond in pure JSON format only, without markdown wrapping. Your JSON object must have exactly two keys:\n"
             '1. "reply": Your conversational response to the user.\n'
@@ -422,7 +426,21 @@ class SalesBotService:
             price_str = f"Rs. {p.price / 10000000} Cr" if p.price >= 10000000 else f"Rs. {p.price / 100000} Lakhs"
             prop_context += f"- {p.name}: {p.bhk} BHK {p.property_type} in {p.location}. Price: {price_str}. Amenities: {p.amenities}\n"
 
-        llm_reply_dict = cls.call_external_llm(msg, formatted_history, req.context or {}, prop_context)
+        # Fetch Settings and RAG Context
+        settings_record = db.query(BotSettings).first()
+        personality = settings_record.personality if settings_record else "Professional"
+        custom_instructions = settings_record.custom_instructions if settings_record else ""
+        rag_context = rag_service.query(msg)
+
+        llm_reply_dict = cls.call_external_llm(
+            message=msg, 
+            history=formatted_history, 
+            context=req.context or {}, 
+            property_context=prop_context,
+            personality=personality,
+            custom_instructions=custom_instructions,
+            rag_context=rag_context
+        )
         
         if llm_reply_dict and llm_reply_dict.get("intent") == "demo_booked":
             reply = llm_reply_dict.get("reply", "Site Visit confirmed! I will arrange the details and send you a calendar invite shortly.")

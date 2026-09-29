@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, leads, analytics, meetings, bot, properties, ws
+from app.api.v1.endpoints import auth, leads, analytics, meetings, bot, properties, ws, settings
 
 api_router = APIRouter()
 
@@ -10,3 +10,4 @@ api_router.include_router(analytics.router, prefix="/analytics", tags=["Analytic
 api_router.include_router(meetings.router, prefix="/meetings", tags=["Meeting Management"])
 api_router.include_router(properties.router, prefix="/properties", tags=["Properties Management"])
 api_router.include_router(ws.router, prefix="/ws", tags=["WebSockets"])
+api_router.include_router(settings.router, prefix="/settings", tags=["Bot Settings"])
