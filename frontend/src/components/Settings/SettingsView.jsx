@@ -14,6 +14,20 @@ export function SettingsView({ currentUser }) {
     loadDocuments();
   }, []);
 
+  // Poll for document status if any document is "Processing"
+  useEffect(() => {
+    const hasProcessing = documents.some(doc => doc.status === 'Processing');
+    let intervalId;
+    if (hasProcessing) {
+      intervalId = setInterval(() => {
+        loadDocuments();
+      }, 2000); // Poll every 2 seconds
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [documents]);
+
   const loadSettings = async () => {
     try {
       const data = await apiService.getBotSettings();
