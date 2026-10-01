@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, UploadCloud, Trash2, FileText, CheckCircle, AlertCircle, Bot } from 'lucide-react';
+import { Settings as SettingsIcon, UploadCloud, Trash2, FileText, CheckCircle, AlertCircle, Bot, ArrowLeft } from 'lucide-react';
 import { apiService } from '../../services/api';
 
-export function SettingsView({ currentUser }) {
+export function SettingsView({ currentUser, onBack }) {
   const [settings, setSettings] = useState({ personality: 'Professional', custom_instructions: '' });
   const [documents, setDocuments] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -91,7 +91,18 @@ export function SettingsView({ currentUser }) {
 
   return (
     <div className="animate-fade-in" style={{ padding: '24px 0' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+        {onBack && (
+          <button
+            className="btn btn-secondary btn-icon"
+            onClick={onBack}
+            style={{ padding: '8px 14px', fontSize: '0.85rem' }}
+            title="Back to Dashboard"
+          >
+            <ArrowLeft size={16} />
+            <span>Back</span>
+          </button>
+        )}
         <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', padding: '12px', borderRadius: '12px', color: '#fff' }}>
           <SettingsIcon size={24} />
         </div>

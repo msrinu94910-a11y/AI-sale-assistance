@@ -419,7 +419,10 @@ export function App() {
         )}
 
         {activeTab === 'settings' && (
-          <SettingsView currentUser={currentUser} />
+          <SettingsView 
+            currentUser={currentUser} 
+            onBack={() => setActiveTab('dashboard')}
+          />
         )}
 
       </main>
